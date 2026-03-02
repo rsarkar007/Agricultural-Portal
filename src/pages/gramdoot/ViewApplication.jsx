@@ -84,7 +84,7 @@ export default function ViewApplication() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* <PortalHeader /> */}
+      <PortalHeader />
 
       <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
