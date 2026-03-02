@@ -107,13 +107,14 @@ export default function ApplicantList() {
                 <th className="px-3 py-2.5 text-center">Applicant Name</th>
                 <th className="px-3 py-2.5 text-center">Aadhaar No</th>
                 <th className="px-3 py-2.5 text-center">Mobile No</th>
+                <th className="px-3 py-2.5 text-center">Status</th>
                 <th className="px-3 py-2.5 text-center">Action</th>
               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400 text-sm">
+                  <td colSpan={7} className="text-center py-8 text-gray-400 text-sm">
                     No records found.
                   </td>
                 </tr>
@@ -137,6 +138,9 @@ export default function ApplicantList() {
                     <td className="px-3 py-2 text-center text-gray-700">{row.name}</td>
                     <td className="px-3 py-2 text-center text-gray-600 font-mono text-xs">{row.aadhaar}</td>
                     <td className="px-3 py-2 text-center text-gray-600 font-mono text-xs">{row.mobile}</td>
+                    <td className="px-3 py-2 text-center">
+                      <StatusBadge status={row.status} />
+                    </td>
                     <td className="px-3 py-2 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         {/* Edit: only for pending/rejected */}
@@ -227,5 +231,22 @@ export default function ApplicantList() {
           </div>
         )}
     </main>
+  );
+}
+
+const STATUS_CONFIG = {
+  pending:      { label: 'Pending',       cls: 'bg-yellow-100 text-yellow-800' },
+  approved:     { label: 'Approved',      cls: 'bg-green-100 text-green-800' },
+  rejected:     { label: 'Rejected',      cls: 'bg-red-100 text-red-800' },
+  sent_to_bank: { label: 'Sent to Bank',  cls: 'bg-blue-100 text-blue-800' },
+  processed:    { label: 'DBT Processed', cls: 'bg-purple-100 text-purple-800' },
+};
+
+function StatusBadge({ status }) {
+  const cfg = STATUS_CONFIG[status] || { label: status, cls: 'bg-gray-100 text-gray-700' };
+  return (
+    <span className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${cfg.cls}`}>
+      {cfg.label}
+    </span>
   );
 }
