@@ -199,8 +199,8 @@ export default function ApplicantList() {
                 key={p}
                 onClick={() => goPage(p)}
                 className={`px-2.5 py-1 text-xs border rounded transition-colors ${p === page
-                    ? 'bg-[#1565c0] text-white border-[#1565c0]'
-                    : 'border-gray-300 hover:bg-gray-100'
+                  ? 'bg-[#1565c0] text-white border-[#1565c0]'
+                  : 'border-gray-300 hover:bg-gray-100'
                   }`}
               >
                 {p}

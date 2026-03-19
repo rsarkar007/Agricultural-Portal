@@ -7,8 +7,8 @@ export default function ADAApplicantList() {
   const navigate = useNavigate();
   const { search, pathname } = useLocation();
   const params = new URLSearchParams(search);
-  const gpFilter    = params.get('gp') || '';
-  const isPending   = pathname.endsWith('/pending');
+  const gpFilter = params.get('gp') || '';
+  const isPending = pathname.endsWith('/pending');
 
   const { applicants, approveApplicant, rejectApplicant, deleteApplicant, loadFarmers } = useApplicants();
   const { districtName, blockName } = useDataDirs();
@@ -16,9 +16,9 @@ export default function ADAApplicantList() {
   useEffect(() => { loadFarmers(); }, []);
 
   // Search field states (applied only on Search click)
-  const [ackInput,    setAckInput]    = useState('');
-  const [nameInput,   setNameInput]   = useState('');
-  const [aadhaarInput,setAadhaarInput]= useState('');
+  const [ackInput, setAckInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [aadhaarInput, setAadhaarInput] = useState('');
   const [mobileInput, setMobileInput] = useState('');
   const [applied, setApplied] = useState({ ack: '', name: '', aadhaar: '', mobile: '' });
 
@@ -26,7 +26,7 @@ export default function ADAApplicantList() {
   const [actionError, setActionError] = useState('');
 
   const handleSearch = () => setApplied({ ack: ackInput, name: nameInput, aadhaar: aadhaarInput, mobile: mobileInput });
-  const handleReset  = () => {
+  const handleReset = () => {
     setAckInput(''); setNameInput(''); setAadhaarInput(''); setMobileInput('');
     setApplied({ ack: '', name: '', aadhaar: '', mobile: '' });
   };
@@ -34,16 +34,16 @@ export default function ADAApplicantList() {
   const list = useMemo(() => {
     let arr = applicants.filter((a) => a.status !== 'deleted');
     if (isPending) arr = arr.filter((a) => a.status === 'pending');
-    if (gpFilter)  arr = arr.filter((a) => (a.fullForm?.gramPanchayat || '—') === gpFilter);
-    if (applied.ack)     arr = arr.filter((a) => a.ackId?.toLowerCase().includes(applied.ack.toLowerCase()));
-    if (applied.name)    arr = arr.filter((a) => a.name?.toLowerCase().includes(applied.name.toLowerCase()));
+    if (gpFilter) arr = arr.filter((a) => (a.fullForm?.gramPanchayat || '—') === gpFilter);
+    if (applied.ack) arr = arr.filter((a) => a.ackId?.toLowerCase().includes(applied.ack.toLowerCase()));
+    if (applied.name) arr = arr.filter((a) => a.name?.toLowerCase().includes(applied.name.toLowerCase()));
     if (applied.aadhaar) arr = arr.filter((a) => a.aadhaar?.includes(applied.aadhaar));
-    if (applied.mobile)  arr = arr.filter((a) => a.mobile?.includes(applied.mobile));
+    if (applied.mobile) arr = arr.filter((a) => a.mobile?.includes(applied.mobile));
     return arr;
   }, [applicants, isPending, gpFilter, applied]);
 
   const searchHeading = isPending ? 'Search Pending Applicant' : 'Search Registered Applicant';
-  const listHeading   = isPending ? 'Pending Applicant List'   : 'Registered Applicant List';
+  const listHeading = isPending ? 'Pending Applicant List' : 'Registered Applicant List';
 
   return (
     <>
@@ -218,14 +218,14 @@ export default function ADAApplicantList() {
                 <button onClick={() => setConfirmDelete(null)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium px-5 py-1.5 rounded">Cancel</button>
                 <button
                   onClick={async () => {
-                  try {
-                    await deleteApplicant(confirmDelete.id);
-                    setConfirmDelete(null);
-                  } catch (e) {
-                    setConfirmDelete(null);
-                    setActionError(e.message || 'Delete failed');
-                  }
-                }}
+                    try {
+                      await deleteApplicant(confirmDelete.id);
+                      setConfirmDelete(null);
+                    } catch (e) {
+                      setConfirmDelete(null);
+                      setActionError(e.message || 'Delete failed');
+                    }
+                  }}
                   className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-5 py-1.5 rounded"
                 >
                   Delete
@@ -242,10 +242,10 @@ export default function ADAApplicantList() {
 // ── Sub-components ──────────────────────────────────────────────────────────
 function ActionBtn({ color, title, onClick, children }) {
   const colorMap = {
-    cyan:   'bg-[#3eb0c9] hover:bg-[#2a9ab0]',
-    green:  'bg-green-600 hover:bg-green-700',
+    cyan: 'bg-[#3eb0c9] hover:bg-[#2a9ab0]',
+    green: 'bg-green-600 hover:bg-green-700',
     orange: 'bg-orange-500 hover:bg-orange-600',
-    red:    'bg-red-600 hover:bg-red-700',
+    red: 'bg-red-600 hover:bg-red-700',
   };
   return (
     <button title={title} onClick={onClick} className={`${colorMap[color]} text-white p-1.5 rounded transition-colors`}>

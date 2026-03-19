@@ -1,17 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const AUTH_API    = '/oauth/token';   // NOTE: no /api prefix — root-level OAuth endpoint
+const AUTH_API = '/oauth/token';   // NOTE: no /api prefix — root-level OAuth endpoint
 const PROFILE_API = '/api/agent_profiles';
 
 /** Map API role_name → internal role key.
  *  Values come from profile.role_name — keep both legacy + current strings.
  */
 const ROLE_MAP = {
-  'Gramdoot'          : 'gramdoot',
-  'ADA'               : 'ada',          // legacy — keep for safety
-  'Asstt. da (block)' : 'ada',          // current API value for ADA role
-  'SNO'               : 'sno',
-  'Bank'              : 'bank',
+  'Gramdoot': 'gramdoot',
+  'ADA': 'ada',          // legacy — keep for safety
+  'Asstt. da (block)': 'ada',          // current API value for ADA role
+  'SNO': 'sno',
+  'Bank': 'bank',
 };
 
 /** Fallback resolver when role_name isn't in ROLE_MAP exactly */
@@ -21,10 +21,10 @@ function resolveRole(role_name) {
   if (exact) return exact;
   // Partial / case-insensitive fallback
   const lower = role_name.toLowerCase();
-  if (lower.includes('gramdoot'))                       return 'gramdoot';
+  if (lower.includes('gramdoot')) return 'gramdoot';
   if (lower.includes('ada') || lower.includes('asstt')) return 'ada';
-  if (lower.includes('sno'))                            return 'sno';
-  if (lower.includes('bank'))                           return 'bank';
+  if (lower.includes('sno')) return 'sno';
+  if (lower.includes('bank')) return 'bank';
   console.warn('[AUTH] Unknown role_name:', role_name, '— defaulting to gramdoot');
   return 'gramdoot';
 }
@@ -104,7 +104,7 @@ export function AuthProvider({ children }) {
     // ── Fetch real profile: role, name, working zone ──────────────────────────
     let role = 'gramdoot';
     let name = email.trim();
-    let id   = null;
+    let id = null;
     let working_zone = null;
     try {
       const profileRes = await fetch(PROFILE_API, {
@@ -112,9 +112,9 @@ export function AuthProvider({ children }) {
       });
       const profile = await profileRes.json();
       console.log('[LOGIN] Profile:', profile);
-      role         = resolveRole(profile.role_name);
-      name         = profile.name?.trim() || email.trim();
-      id           = profile.id ?? null;  // needed as user_id when creating farmers
+      role = resolveRole(profile.role_name);
+      name = profile.name?.trim() || email.trim();
+      id = profile.id ?? null;  // needed as user_id when creating farmers
       // API returns 'working_zones' (plural array) for Gramdoot, 'working_zone' (singular) for others
       // Always take the first zone entry; fall back to singular field for backwards compat
       working_zone = (profile.working_zones ?? [])[0] ?? profile.working_zone ?? null;
