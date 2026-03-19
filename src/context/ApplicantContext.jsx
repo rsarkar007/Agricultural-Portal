@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { createFarmer, listFarmers, normalizeFarmer, updateFarmerStatus, deleteFarmer } from '../api/client';
 
 const NOOP = () => Promise.resolve();
@@ -6,7 +6,7 @@ const DEFAULT_CTX = {
   applicants: [],
   loadFarmers: NOOP,
   addApplicant: NOOP,
-  updateApplicant: () => {},
+  updateApplicant: () => { },
   approveApplicant: NOOP,
   rejectApplicant: NOOP,
   deleteApplicant: NOOP,
@@ -27,18 +27,17 @@ export function ApplicantProvider({ children }) {
   /**
    * Pull the current user's farmer list from the server.
    * Safe to call on every page mount — silently skips if endpoint isn't live yet.
+   * Memoized to prevent unnecessary re-calls.
    */
-  const loadFarmers = async () => {
+  const loadFarmers = useCallback(async () => {
     try {
       const data = await listFarmers();
       const arr = Array.isArray(data) ? data : (data?.farmers || data?.data || []);
       setApplicants(arr.map(normalizeFarmer));
     } catch (e) {
-      // GET /api/farmers may not be implemented yet on the backend.
-      // Log a warning but don't wipe any applicants that are already in state.
       console.warn('[Applicants] listFarmers unavailable:', e.message);
     }
-  };
+  }, []);
 
   /**
    * Quick registration — POST to /api/farmers.
@@ -49,24 +48,24 @@ export function ApplicantProvider({ children }) {
   const addApplicant = async ({ name, aadhaar, mobile }, user) => {
     if (!user?.id) throw new Error('User profile not loaded — please log out and log in again.');
     const farmerBody = {
-      user_id:      user.id,
-      aadhar_no:    aadhaar,
-      mobile_no:    mobile,
+      user_id: user.id,
+      aadhar_no: aadhaar,
+      mobile_no: mobile,
       is_land_less: false,  // not declared yet at quick-reg stage; set during full registration
       farmer_profile_attributes: { name },
       farmer_address_attributes: {
         district_id: user.working_zone?.district_id || undefined,
-        block_id:    user.working_zone?.block_id    || undefined,
+        block_id: user.working_zone?.block_id || undefined,
       },
     };
-    const result     = await createFarmer(farmerBody);
+    const result = await createFarmer(farmerBody);
     const normalized = normalizeFarmer(result);
     // Server may not echo back all submitted fields — patch with known values
     const patched = {
       ...normalized,
-      name:    normalized.name    || name,
+      name: normalized.name || name,
       aadhaar: normalized.aadhaar || aadhaar,
-      mobile:  normalized.mobile  || mobile,
+      mobile: normalized.mobile || mobile,
     };
     setApplicants((prev) => [patched, ...prev]);
     return patched;
@@ -104,12 +103,12 @@ export function ApplicantProvider({ children }) {
 
   const revertToADA = async (id) => {
     await updateFarmerStatus(id, 'pending');
-    setApplicants((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'pending' }     : a)));
+    setApplicants((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'pending' } : a)));
   };
 
   const markProcessed = async (id) => {
     await updateFarmerStatus(id, 'processed');
-    setApplicants((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'processed' }   : a)));
+    setApplicants((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'processed' } : a)));
   };
 
   return (

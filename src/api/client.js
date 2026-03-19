@@ -19,12 +19,12 @@ function getToken() {
 function extractError(data, fallback = 'Request failed') {
   // Rails validation:  { message: '...' }  or  { errors: { field: ['msg'] } }
   // OAuth errors:      { error_description: '...' }  or  { error: '...' }
-  if (data?.error_description)                  return data.error_description;
+  if (data?.error_description) return data.error_description;
   if (data?.message && typeof data.message === 'string') return data.message;
-  if (data?.error   && typeof data.error   === 'string') return data.error;
+  if (data?.error && typeof data.error === 'string') return data.error;
   if (data?.errors) {
     if (typeof data.errors === 'string') return data.errors;
-    if (Array.isArray(data.errors))      return data.errors.join(', ');
+    if (Array.isArray(data.errors)) return data.errors.join(', ');
     if (typeof data.errors === 'object') {
       const msgs = Object.entries(data.errors)
         .flatMap(([k, v]) => (Array.isArray(v) ? v.map((m) => `${k} ${m}`) : [`${k} ${v}`]));
@@ -130,14 +130,20 @@ export async function lookupIFSC(ifsc) {
 
 /** Map server approval_status → internal status key used by the app */
 function serverStatusToLocal(s) {
+  const normalized = String(s ?? '').trim().toLowerCase();
   const map = {
+    '': 'pending',
     quick_registration: 'pending',
-    approved:           'approved',
-    rejected:           'rejected',
-    sent_to_bank:       'sent_to_bank',
-    processed:          'processed',
+    pending: 'pending',
+    submitted: 'pending',
+    approved: 'approved',
+    rejected: 'rejected',
+    sent_to_bank: 'sent_to_bank',
+    processed: 'processed',
   };
-  return map[s] ?? 'pending';
+  if (normalized === '1' || normalized === 'true') return 'approved';
+  if (normalized === '0' || normalized === 'false') return 'pending';
+  return map[normalized] ?? 'pending';
 }
 
 /**
@@ -147,59 +153,60 @@ function serverStatusToLocal(s) {
  *  - Nested (POST/PATCH /api/farmers): farmer_profile, farmer_address, farmer_bank objects
  */
 export function normalizeFarmer(f) {
+  const approvalStatusRaw = f.approval_status ?? f.status ?? f.status_name ?? f.state ?? null;
+  const status = serverStatusToLocal(approvalStatusRaw);
+
   return {
-    id:     f.id,
-    ackId:  f.acknowledgement_no || '',
+    id: f.id,
+    ackId: f.acknowledgement_no || '',
     // flat (farmer_lists) keeps name at root; nested responses nest it in farmer_profile
-    name:   f.farmer_profile?.name || f.name || '',
-    aadhaar: f.aadhar_no  || '',
-    mobile:  f.mobile_no  || '',
-    status:  serverStatusToLocal(f.approval_status),
+    name: f.farmer_profile?.name || f.name || '',
+    aadhaar: f.aadhar_no || '',
+    mobile: f.mobile_no || '',
+    status,
+    // raw status for debugging and accurate mapping
+    _rawApprovalStatus: approvalStatusRaw,
+    _rawStatus: f.status,
+    _rawApprovalStatusField: f.approval_status,
     // Profile photo — flat list has farmer_image_url at root; nested has it inside farmer_profile
     farmerImageUrl: f.farmer_image_url || f.farmer_profile?.farmer_image_url || '',
-    fullForm: f.farmer_profile ? {
-      voterCard:   f.voter_card_no || '',
-      // Existing upload URLs — used to show "✓ Already uploaded" in FileInput.
-      // Try new field names first (aadhaar_image_url, voter_image_url), fall back to old names.
-      aadhaarImageUrl:    f.aadhaar_image_url      || f.aadhaar_card_image_url || '',
-      voterCardImageUrl:  f.voter_image_url         || f.voter_card_image_url   || '',
-      selfDeclarationUrl: f.self_declaration_url    || '',
-      applicantImageUrl:  f.farmer_profile?.farmer_image_url || '',
-      bankImageUrl:       '',  // bank passbook image URL not returned by API yet
-      // Applicant details
-      fathersName: f.farmer_profile.father_name             || '',
-      relation:    f.farmer_profile.relationship            || '',
-      gender:      f.farmer_profile.gender                  || '',
-      dob:         f.farmer_profile.date_of_birth           || '',
-      age:         f.farmer_profile.age   != null ? String(f.farmer_profile.age)   : '',
-      caste:       f.farmer_profile.caste || '',
-      // Nominee
-      nomineeName:       f.farmer_profile.nominee_name                   || '',
-      nomineeRelation:   f.farmer_profile.relation_with_applicant        || '',
-      nomineeFatherName: f.farmer_profile.nominee_father_husband_name    || '',
-      guardianName:      f.farmer_profile.name_of_gurdian                || '',
-      nomineeDob:        f.farmer_profile.nominee_date_of_birth          || '',
-      nomineeAge:        f.farmer_profile.nominee_age != null ? String(f.farmer_profile.nominee_age) : '',
-      // Address — stored as numeric ID strings so DataDirsContext helpers work
-      district:     f.farmer_address?.district_id       != null ? String(f.farmer_address.district_id)       : '',
-      block:        f.farmer_address?.block_id           != null ? String(f.farmer_address.block_id)          : '',
-      gramPanchayat:f.farmer_address?.gram_panchayat_id != null ? String(f.farmer_address.gram_panchayat_id) : '',
-      village:      f.farmer_address?.village_id         != null ? String(f.farmer_address.village_id)        : '',
-      mouza:        f.farmer_address?.mouza_id           != null ? String(f.farmer_address.mouza_id)          : '',
-      address:      f.farmer_address?.address      || '',
-      postOffice:   f.farmer_address?.post_office  || '',
-      policeStation:f.farmer_address?.police_station|| '', // server stores as name string
-      pinCode:      f.farmer_address?.pincode       || '',
-      // Bank
-      bankName:          f.farmer_bank?.bank_name           || '',
-      branchName:        f.farmer_bank?.branch_name         || '',
-      accountNumber:     f.farmer_bank?.account_number      || '',
-      ifscCode:          f.farmer_bank?.ifsc_code           || '',
-      accountHolderName: f.farmer_bank?.account_holder_name || '',
-      accountType:       f.farmer_bank?.account_type        || '',
-      bankImageUrl:      f.farmer_bank?.bank_image_url      || '',  // passbook image URL
+    fullForm: {
+      // Use nested objects if they exist, otherwise fall back to top-level fields
+      voterCard: f.voter_card_no || '',
+      aadhaarImageUrl: f.aadhaar_image_url || f.aadhaar_card_image_url || '',
+      voterCardImageUrl: f.voter_image_url || f.voter_card_image_url || '',
+      selfDeclarationUrl: f.self_declaration_url || '',
+      applicantImageUrl: f.farmer_profile?.farmer_image_url || f.farmer_image_url || '',
+      fathersName: f.farmer_profile?.father_name || f.father_name || '',
+      relation: f.farmer_profile?.relationship || f.relationship || '',
+      gender: f.farmer_profile?.gender || f.gender || '',
+      dob: f.farmer_profile?.date_of_birth || f.date_of_birth || '',
+      age: (f.farmer_profile?.age ?? f.age) != null ? String(f.farmer_profile?.age ?? f.age) : '',
+      caste: f.farmer_profile?.caste || f.caste || '',
+      nomineeName: f.farmer_profile?.nominee_name || '',
+      nomineeRelation: f.farmer_profile?.relation_with_applicant || '',
+      nomineeFatherName: f.farmer_profile?.nominee_father_husband_name || '',
+      guardianName: f.farmer_profile?.name_of_gurdian || '',
+      nomineeDob: f.farmer_profile?.nominee_date_of_birth || '',
+      nomineeAge: f.farmer_profile?.nominee_age != null ? String(f.farmer_profile.nominee_age) : '',
+      district: (f.farmer_address?.district_id ?? f.district_id) != null ? String(f.farmer_address?.district_id ?? f.district_id) : '',
+      block: (f.farmer_address?.block_id ?? f.block_id) != null ? String(f.farmer_address?.block_id ?? f.block_id) : '',
+      gramPanchayat: (f.farmer_address?.gram_panchayat_id ?? f.gram_panchayat_id) != null ? String(f.farmer_address?.gram_panchayat_id ?? f.gram_panchayat_id) : '',
+      village: (f.farmer_address?.village_id ?? f.village_id) != null ? String(f.farmer_address?.village_id ?? f.village_id) : '',
+      mouza: (f.farmer_address?.mouza_id ?? f.mouza_id) != null ? String(f.farmer_address?.mouza_id ?? f.mouza_id) : '',
+      address: f.farmer_address?.address || f.address || '',
+      postOffice: f.farmer_address?.post_office || f.post_office || '',
+      policeStation: f.farmer_address?.police_station || f.police_station || '',
+      pinCode: f.farmer_address?.pincode || f.pincode || '',
+      bankName: f.farmer_bank?.bank_name || f.bank_name || '',
+      branchName: f.farmer_bank?.branch_name || f.branch_name || '',
+      accountNumber: f.farmer_bank?.account_number || f.account_number || '',
+      ifscCode: f.farmer_bank?.ifsc_code || f.ifsc_code || '',
+      accountHolderName: f.farmer_bank?.account_holder_name || f.account_holder_name || '',
+      accountType: f.farmer_bank?.account_type || f.account_type || '',
+      bankImageUrl: f.farmer_bank?.bank_image_url || f.bank_image_url || '',
       noAgriculturalLand: f.is_land_less || false,
-    } : null,
+    },
   };
 }
 
@@ -246,10 +253,10 @@ export async function updateFarmerMultipart(id, farmerBody, files = {}) {
   // Attach files under the Rails-expected param names (confirmed from API docs)
   const FILE_FIELDS = {
     aadhaar_card_image: 'farmer[aadhaar_image]',
-    voter_card_image:   'farmer[voter_image]',
-    farmer_image:       'farmer[farmer_profile_attributes][farmer_image]',
-    bank_image:         'farmer[farmer_bank_attributes][bank_image]',
-    self_declaration:   'farmer[self_declaration]',
+    voter_card_image: 'farmer[voter_image]',
+    farmer_image: 'farmer[farmer_profile_attributes][farmer_image]',
+    bank_image: 'farmer[farmer_bank_attributes][bank_image]',
+    self_declaration: 'farmer[self_declaration]',
   };
   Object.entries(FILE_FIELDS).forEach(([key, formKey]) => {
     if (files[key] instanceof File) fd.append(formKey, files[key]);
@@ -294,10 +301,11 @@ export async function searchFarmer(query) {
 
 /**
  * Update a farmer's approval status (approve / reject).
- * PATCH /api/farmers/:id  →  { farmer: { approval_status } }
+ * The backend currently expects a POST to /api/farmers/:id (same endpoint as updateFarmer).
+ * This avoids 404s when PATCH is not supported by the server.
  */
 export async function updateFarmerStatus(id, approvalStatus) {
-  return apiPatchJSON(`/farmers/${id}`, { farmer: { approval_status: approvalStatus } }, { auth: true });
+  return apiPostJSON(`/farmers/${id}`, { farmer: { approval_status: approvalStatus } }, { auth: true });
 }
 
 /**
