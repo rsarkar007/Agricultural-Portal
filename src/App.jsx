@@ -23,6 +23,9 @@ const FarmerSearch = React.lazy(() => import('./components/FarmerSearch'));
 import PortalRoute from './components/PortalRoute';
 import ADAApprovedApplicantList from './pages/ada/ApprovedList';
 import ADASentToBankApplicantList from './pages/ada/SentToBankList';
+import ADARejectedApplicantList from './pages/ada/RejectedList';
+import ADARevertedApplicantList from './pages/ada/RevertedList';
+import ADADeletedApplicantList from './pages/ada/DeletedList';
 
 const GramdootDashboard = React.lazy(() => import('./pages/gramdoot/Dashboard'));
 const RegistrationForm = React.lazy(() => import('./pages/gramdoot/RegistrationForm'));
@@ -97,6 +100,13 @@ export default function App() {
                 element={<AppLayout wrapMain={false}><PortalRoute role="ada"><ADASentToBankApplicantList /></PortalRoute></AppLayout>} />
               <Route path="/portal/ada/pending"
                 element={<AppLayout wrapMain={false}><PortalRoute role="ada"><ADAApplicantList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/ada/rejected_list"
+                element={<AppLayout wrapMain={false}><PortalRoute role="ada"><ADARejectedApplicantList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/ada/reverted_list"
+                element={<AppLayout wrapMain={false}><PortalRoute role="ada"><ADARevertedApplicantList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/ada/deleted_list"
+                element={<AppLayout wrapMain={false}><PortalRoute role="ada"><ADADeletedApplicantList /></PortalRoute></AppLayout>} />
+
               <Route path="/portal/ada/registration/:id/view"
                 element={<AppLayout wrapMain={false}><PortalRoute role="ada"><ViewApplication /></PortalRoute></AppLayout>} />
 
