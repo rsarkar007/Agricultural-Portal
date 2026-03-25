@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { useApplicants } from "../../context/ApplicantContext";
+import { createAgent } from "../../api/client"; // ✅ Correct API
 
 export default function NewMember() {
-    const { addApplicant } = useApplicants();
 
     const [formData, setFormData] = useState({
         email: "",
@@ -58,17 +57,40 @@ export default function NewMember() {
         try {
             setLoading(true);
 
-            const name = `${formData.firstName} ${formData.lastName}`.trim();
+            const result = await createAgent({
+                email: formData.email,
+                password: formData.password,
+                mobile: formData.mobile,
 
-            await addApplicant(
-                {
-                    name,
-                    aadhar_no: Date.now().toString(),
-                    mobile_no: formData.mobile,
-                },
-                currentUser
-            );
+                role_id: formData.role === "Gramdoot" ? 8 : 7,
 
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                gender: formData.gender,
+
+                // ✅ REQUIRED EXTRA FIELDS (from your cURL)
+                fatherName: "NA",
+                dob: "1990-01-01",
+
+                address: "Default Address",
+                district_id: currentUser.working_zone.district_id,
+                block_id: currentUser.working_zone.block_id,
+                village_id: 1,
+                pincode: "700001",
+                gram_panchayat_id: 1,
+
+                account_number: "1234567890",
+                account_holder_name: formData.firstName,
+                bank_name: "SBI",
+                ifsc_code: "SBIN0000001",
+                branch_name: "Default Branch",
+                account_type: "Savings",
+
+                wz_district_id: currentUser.working_zone.district_id,
+                wz_block_id: currentUser.working_zone.block_id,
+            });
+
+            console.log("SUCCESS:", result);
             alert("Member registered successfully!");
 
             setFormData({
@@ -83,6 +105,7 @@ export default function NewMember() {
             });
 
             setErrors({});
+
         } catch (err) {
             console.error("FULL ERROR:", err);
             alert("Failed: " + err.message);
@@ -90,18 +113,15 @@ export default function NewMember() {
             setLoading(false);
         }
     };
-
     return (
         <>
             <main className="grow w-full px-4 py-8">
                 <div className="max-w-6xl mx-auto">
 
-                    {/* Page Heading */}
                     <h2 className="text-base font-bold text-gray-700 tracking-widest uppercase mb-6">
                         New Member
                     </h2>
 
-                    {/* Form Container */}
                     <div className="border border-gray-200 p-6">
 
                         <form onSubmit={handleSubmit}>
@@ -234,7 +254,6 @@ export default function NewMember() {
 
                             </div>
 
-                            {/* Submit */}
                             <div className="flex justify-center mt-8">
                                 <button
                                     type="submit"

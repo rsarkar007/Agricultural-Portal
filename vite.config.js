@@ -7,6 +7,7 @@ export default defineConfig({
     server: {
         proxy: {
             '/api': {
+                // target: 'http://144.76.19.201:3002',
                 target: 'http://144.76.19.201:3002',
                 changeOrigin: true,
                 // No rewrite — backend expects the /api prefix in the URL
