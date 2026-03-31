@@ -3,22 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApplicants } from '../../context/ApplicantContext';
 
-
 const PAGE_SIZE = 20;
 
 export default function ApplicantList() {
   const { user } = useAuth();
-  const { applicants, loadFarmers } = useApplicants();
+  const { applicants, loadFarmers, loadingFarmers, farmersError, farmersMeta } = useApplicants();
   const navigate = useNavigate();
 
-  useEffect(() => { loadFarmers(); }, []);
+  useEffect(() => {
+    loadFarmers();
+  }, [loadFarmers]);
 
-  // Search state
   const [search, setSearch] = useState({ ackId: '', name: '', aadhaar: '', mobile: '' });
   const [applied, setApplied] = useState({ ackId: '', name: '', aadhaar: '', mobile: '' });
   const [page, setPage] = useState(1);
 
-  // Exclude deleted from Gramdoot view
   const visible = useMemo(
     () => applicants.filter((a) => a.status !== 'deleted'),
     [applicants]
@@ -28,10 +27,10 @@ export default function ApplicantList() {
     return visible.filter((a) => {
       const s = applied;
       return (
-        (!s.ackId || a.ackId.toLowerCase().includes(s.ackId.toLowerCase())) &&
-        (!s.name || a.name.toLowerCase().includes(s.name.toLowerCase())) &&
-        (!s.aadhaar || a.aadhaar.includes(s.aadhaar)) &&
-        (!s.mobile || a.mobile.includes(s.mobile))
+        (!s.ackId || (a.ackId || '').toLowerCase().includes(s.ackId.toLowerCase())) &&
+        (!s.name || (a.name || '').toLowerCase().includes(s.name.toLowerCase())) &&
+        (!s.aadhaar || (a.aadhaar || '').includes(s.aadhaar)) &&
+        (!s.mobile || (a.mobile || '').includes(s.mobile))
       );
     });
   }, [visible, applied]);
@@ -39,24 +38,30 @@ export default function ApplicantList() {
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleSearch = () => { setApplied({ ...search }); setPage(1); };
-  const handleReset = () => {
-    const empty = { ackId: '', name: '', aadhaar: '', mobile: '' };
-    setSearch(empty); setApplied(empty); setPage(1);
+  const handleSearch = () => {
+    setApplied({ ...search });
+    setPage(1);
   };
 
-  const goPage = (p) => { if (p >= 1 && p <= totalPages) setPage(p); };
+  const handleReset = () => {
+    const empty = { ackId: '', name: '', aadhaar: '', mobile: '' };
+    setSearch(empty);
+    setApplied(empty);
+    setPage(1);
+  };
+
+  const goPage = (p) => {
+    if (p >= 1 && p <= totalPages) setPage(p);
+  };
 
   const visiblePages = () => {
     const pages = [];
-    for (let i = 1; i <= Math.min(totalPages, 3); i++) pages.push(i);
+    for (let i = 1; i <= Math.min(totalPages, 3); i += 1) pages.push(i);
     return pages;
   };
 
   return (
     <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-8">
-
-      {/* ── Search section ── */}
       <h2 className="text-sm font-bold text-gray-800 tracking-widest mb-4">
         SEARCH REGISTERED APPLICANT
       </h2>
@@ -92,13 +97,49 @@ export default function ApplicantList() {
           >
             Reset
           </button>
+          <button
+            onClick={loadFarmers}
+            className="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium px-5 py-2 rounded transition-colors"
+          >
+            Refresh List
+          </button>
         </div>
       </div>
 
-      {/* ── Table ── */}
       <h3 className="text-[#0891b2] font-semibold text-sm mb-3">
         Registered Applicant List
       </h3>
+
+      <div className="mb-3 flex flex-wrap items-center gap-3 text-xs">
+        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
+          API farmers: {farmersMeta.serverCount}
+        </span>
+        <span className="inline-flex items-center rounded-full bg-cyan-50 px-3 py-1 font-medium text-cyan-700">
+          Visible in UI: {visible.length}
+        </span>
+        {farmersMeta.loadedAt && (
+          <span className="text-gray-500">
+            Last loaded: {new Date(farmersMeta.loadedAt).toLocaleString()}
+          </span>
+        )}
+        {user?.email && (
+          <span className="text-gray-500">
+            User: {user.email}
+          </span>
+        )}
+      </div>
+
+      {loadingFarmers && (
+        <div className="mb-4 rounded border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+          Loading farmer list from API...
+        </div>
+      )}
+
+      {farmersError && (
+        <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Failed to load farmer list: {farmersError}
+        </div>
+      )}
 
       <div className="overflow-x-auto border border-gray-200 rounded">
         <table className="w-full text-sm">
@@ -117,7 +158,7 @@ export default function ApplicantList() {
             {paginated.length === 0 ? (
               <tr>
                 <td colSpan={7} className="text-center py-8 text-gray-400 text-sm">
-                  No records found.
+                  {loadingFarmers ? 'Loading records...' : 'No records found.'}
                 </td>
               </tr>
             ) : (
@@ -134,18 +175,17 @@ export default function ApplicantList() {
                       onClick={() => navigate(`/portal/registration/${row.id}/view`)}
                       className="text-[#0891b2] hover:underline font-mono text-xs"
                     >
-                      {row.ackId}
+                      {row.ackId || '-'}
                     </button>
                   </td>
-                  <td className="px-3 py-2 text-center text-gray-700">{row.name}</td>
-                  <td className="px-3 py-2 text-center text-gray-600 font-mono text-xs">{row.aadhaar}</td>
-                  <td className="px-3 py-2 text-center text-gray-600 font-mono text-xs">{row.mobile}</td>
+                  <td className="px-3 py-2 text-center text-gray-700">{row.name || '-'}</td>
+                  <td className="px-3 py-2 text-center text-gray-600 font-mono text-xs">{row.aadhaar || '-'}</td>
+                  <td className="px-3 py-2 text-center text-gray-600 font-mono text-xs">{row.mobile || '-'}</td>
                   <td className="px-3 py-2 text-center">
                     <StatusBadge status={row.status} />
                   </td>
                   <td className="px-3 py-2 text-center">
                     <div className="flex items-center justify-center gap-1.5">
-                      {/* Edit: only for pending/rejected */}
                       {(row.status === 'pending' || row.status === 'rejected') && (
                         <button
                           onClick={() => navigate(`/portal/registration/${row.id}/edit`)}
@@ -157,7 +197,6 @@ export default function ApplicantList() {
                           </svg>
                         </button>
                       )}
-                      {/* View */}
                       <button
                         onClick={() => navigate(`/portal/registration/${row.id}/view`)}
                         title="View Application"
@@ -177,12 +216,10 @@ export default function ApplicantList() {
         </table>
       </div>
 
-      {/* ── Pagination ── */}
       {filtered.length > 0 && (
         <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
           <span>
-            Showing{' '}
-            <strong>{Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}</strong> to{' '}
+            Showing <strong>{Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}</strong> to{' '}
             <strong>{Math.min(page * PAGE_SIZE, filtered.length)}</strong> of{' '}
             <strong>{filtered.length}</strong> records
           </span>
@@ -192,24 +229,28 @@ export default function ApplicantList() {
               disabled={page === 1}
               className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
             >
-              « First
+              First
             </button>
             {visiblePages().map((p) => (
               <button
                 key={p}
                 onClick={() => goPage(p)}
-                className={`px-2.5 py-1 text-xs border rounded transition-colors ${p === page
-                  ? 'bg-[#1565c0] text-white border-[#1565c0]'
-                  : 'border-gray-300 hover:bg-gray-100'
-                  }`}
+                className={`px-2.5 py-1 text-xs border rounded transition-colors ${
+                  p === page
+                    ? 'bg-[#1565c0] text-white border-[#1565c0]'
+                    : 'border-gray-300 hover:bg-gray-100'
+                }`}
               >
                 {p}
               </button>
             ))}
             {totalPages > 3 && page < totalPages && (
               <>
-                <span className="px-1 text-gray-400">…</span>
-                <button onClick={() => goPage(totalPages)} className="px-2.5 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100">
+                <span className="px-1 text-gray-400">...</span>
+                <button
+                  onClick={() => goPage(totalPages)}
+                  className="px-2.5 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100"
+                >
                   {totalPages}
                 </button>
               </>
@@ -219,14 +260,14 @@ export default function ApplicantList() {
               disabled={page === totalPages}
               className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
             >
-              Next ›
+              Next
             </button>
             <button
               onClick={() => goPage(totalPages)}
               disabled={page === totalPages}
               className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
             >
-              Last »
+              Last
             </button>
           </div>
         </div>
@@ -244,7 +285,7 @@ const STATUS_CONFIG = {
 };
 
 function StatusBadge({ status }) {
-  const cfg = STATUS_CONFIG[status] || { label: status, cls: 'bg-gray-100 text-gray-700' };
+  const cfg = STATUS_CONFIG[status] || { label: status || 'Unknown', cls: 'bg-gray-100 text-gray-700' };
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${cfg.cls}`}>
       {cfg.label}

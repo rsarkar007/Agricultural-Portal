@@ -2,31 +2,28 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AUTH_API = '/api/v1/login';
 
-/** Map API role_name → internal role key.
- *  Values come from profile.role_name — keep both legacy + current strings.
- */
 const ROLE_MAP = {
-  'Gramdoot': 'gramdoot',
-  'ADA': 'ada',          // legacy — keep for safety
-  'Asstt. da (block)': 'ada',          // current API value for ADA role
-  'SNO': 'sno',
-  'Bank': 'bank',
-  'Admin': 'admin',
+  Gramdoot: 'gramdoot',
+  ADA: 'ada',
+  'Asstt. da (block)': 'ada',
+  SNO: 'sno',
+  Bank: 'bank',
+  Admin: 'admin',
 };
 
-/** Fallback resolver when role_name isn't in ROLE_MAP exactly */
 function resolveRole(role_name) {
   if (!role_name) return 'gramdoot';
   const exact = ROLE_MAP[role_name];
   if (exact) return exact;
-  // Partial / case-insensitive fallback
+
   const lower = role_name.toLowerCase();
   if (lower.includes('admin')) return 'admin';
   if (lower.includes('gramdoot')) return 'gramdoot';
   if (lower.includes('ada') || lower.includes('asstt')) return 'ada';
   if (lower.includes('sno')) return 'sno';
   if (lower.includes('bank')) return 'bank';
-  console.warn('[AUTH] Unknown role_name:', role_name, '— defaulting to gramdoot');
+
+  console.warn('[AUTH] Unknown role_name:', role_name, '- defaulting to gramdoot');
   return 'gramdoot';
 }
 
@@ -44,50 +41,40 @@ export function AuthProvider({ children }) {
     const stored = sessionStorage.getItem('portalUser');
     if (stored) {
       const parsed = JSON.parse(stored);
-      // Check if token is still valid (token_expires_at is stored as ms timestamp)
-      if (parsed.token_expires_at && Date.now() < parsed.token_expires_at) {
+      if (!parsed.token_expires_at || Date.now() < parsed.token_expires_at || parsed.refresh_token) {
         setUser(parsed);
       } else {
-        // Token expired — clear session and force re-login
         sessionStorage.removeItem('portalUser');
       }
     }
     setLoading(false);
   }, []);
 
-  // Auto-logout when token expires mid-session
   useEffect(() => {
     if (!user?.token_expires_at) return;
+    if (user.refresh_token) return;
+
     const msLeft = user.token_expires_at - Date.now();
 
-    // If we have a refresh token, let the api client handle the 401
-    // We only force logout if there's no refresh token OR if it's been a very long time
     if (msLeft <= 0) {
-      if (!user.refresh_token) {
-        logout();
-      }
+      logout();
       return;
     }
 
     const timer = setTimeout(() => {
-      if (!user.refresh_token) {
-        console.warn('[AUTH] Token expired — logging out.');
-        logout();
-      }
+      console.warn('[AUTH] Token expired - logging out.');
+      logout();
     }, msLeft);
 
     return () => clearTimeout(timer);
   }, [user]);
 
-  /**
-   * Authenticates against the new /api/v1/login API and handles response
-   */
   const login = async (email, password) => {
     const body = JSON.stringify({
       auth: {
         email: email.trim(),
-        password: password
-      }
+        password,
+      },
     });
 
     let resultData;
@@ -95,7 +82,7 @@ export function AuthProvider({ children }) {
       const res = await fetch(AUTH_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body
+        body,
       });
       resultData = await res.json();
 
@@ -103,7 +90,6 @@ export function AuthProvider({ children }) {
       console.log('[LOGIN] Response:', resultData);
 
       if (!res.ok || !resultData.data?.access_token) {
-        // API returns error objects
         const msg = resultData?.message || resultData?.error || resultData?.data?.message || 'Login failed.';
         console.warn('[LOGIN] Failed:', msg);
         return { success: false, message: msg };
@@ -120,7 +106,7 @@ export function AuthProvider({ children }) {
       const payload = JSON.parse(atob(access_token.split('.')[1]));
       if (payload.exp) token_expires_at = payload.exp * 1000;
     } catch (e) {
-      console.warn("Failed to parse token expiration", e);
+      console.warn('Failed to parse token expiration', e);
     }
 
     const role = resolveRole(userData.role_name);
@@ -153,9 +139,9 @@ export function AuthProvider({ children }) {
         await fetch('/api/v1/logout', {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         });
       } catch (err) {
         console.warn('[AUTH] Logout API failed:', err);
