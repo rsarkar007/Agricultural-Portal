@@ -112,7 +112,7 @@ export default function TopBar() {
             /* ── Not logged-in: Login button ── */
             <button
               onClick={() => setIsLoginModalOpen(true)}
-              className="relative inline-flex items-center justify-center gap-2 px-6 py-2 text-sm font-bold text-white transition-all duration-300 bg-linear-to-r from-blue-600 to-indigo-600 border border-transparent rounded-full shadow-md hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5 overflow-hidden group cursor-pointer"
+              className="relative inline-flex items-center justify-center gap-2 px-6 py-2 text-sm font-bold text-white transition-all duration-300 bg-linear-to-r from-blue-600 to-cyan-600 border border-transparent rounded-full shadow-md hover:shadow-lg hover:shadow-blue-500/30  overflow-hidden group cursor-pointer"
             >
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
               <i className="fa fa-lock text-white/90 group-hover:scale-110 transition-transform relative z-10 w-3"></i>

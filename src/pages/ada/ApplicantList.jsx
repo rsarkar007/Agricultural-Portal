@@ -22,6 +22,7 @@ export default function ADAApplicantList() {
     loadFarmers,
     loadADAPendings,
     loadADAApproved,
+    pendingMeta,
   } = useApplicants();
   const { districtName, blockName } = useDataDirs();
 
@@ -33,15 +34,21 @@ export default function ADAApplicantList() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [actionError, setActionError] = useState('');
   const [actingId, setActingId] = useState(null);
-  const loadList = isPending
-    ? loadADAPendings
-    : isApproved
-      ? loadADAApproved
-      : loadFarmers;
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    loadList();
-  }, [loadList]);
+    if (isPending) {
+      loadADAPendings(page);
+      return;
+    }
+
+    if (isApproved) {
+      loadADAApproved();
+      return;
+    }
+
+    loadFarmers();
+  }, [isPending, isApproved, page, loadADAPendings, loadADAApproved, loadFarmers]);
 
   const list = useMemo(() => {
     let arr = applicants;
@@ -74,6 +81,9 @@ export default function ADAApplicantList() {
     return arr;
   }, [applicants, isPending, isApproved, gpFilter, applied]);
 
+  const totalPages = isPending ? Math.max(1, pendingMeta.totalPages || 1) : Math.max(1, list.length);
+  const paginatedList = list;
+
   const searchHeading = isPending
     ? 'Search Pending Applicant'
     : isApproved
@@ -93,6 +103,7 @@ export default function ADAApplicantList() {
       aadhaar: aadhaarInput,
       mobile: mobileInput,
     });
+    setPage(1);
   };
 
   const handleReset = () => {
@@ -101,6 +112,22 @@ export default function ADAApplicantList() {
     setAadhaarInput('');
     setMobileInput('');
     setApplied({ ack: '', name: '', aadhaar: '', mobile: '' });
+    setPage(1);
+  };
+
+  useEffect(() => {
+    if (!isPending) return;
+    if (page > totalPages) setPage(totalPages);
+  }, [isPending, page, totalPages]);
+
+  const goPage = (nextPage) => {
+    if (nextPage >= 1 && nextPage <= totalPages) setPage(nextPage);
+  };
+
+  const visiblePages = () => {
+    const pages = [];
+    for (let i = 1; i <= Math.min(totalPages, 3); i += 1) pages.push(i);
+    return pages;
   };
 
   const runAction = async (id, action, fallbackMessage) => {
@@ -175,7 +202,19 @@ export default function ADAApplicantList() {
             </p>
             <button
               type="button"
-              onClick={loadList}
+              onClick={() => {
+                if (isPending) {
+                  loadADAPendings(page);
+                  return;
+                }
+
+                if (isApproved) {
+                  loadADAApproved();
+                  return;
+                }
+
+                loadFarmers();
+              }}
               className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-xs font-medium px-4 py-1.5 rounded transition-colors"
             >
               Refresh
@@ -205,20 +244,23 @@ export default function ADAApplicantList() {
               </thead>
 
               <tbody>
-                {list.length === 0 ? (
+                {paginatedList.length === 0 ? (
                   <tr>
                     <td colSpan={emptyColSpan} className="text-center py-10 text-gray-400 text-sm">
                       No applications found.
                     </td>
                   </tr>
                 ) : (
-                  list.map((row, idx) => {
+                  paginatedList.map((row, idx) => {
                     const khetmajurId = row.khetmajurId || row.khetmajur_id || row.id;
                     const isBusy = actingId === row.id;
+                    const perPage = pendingMeta.perPage || paginatedList.length || 20;
+                    const currentPage = pendingMeta.currentPage || page;
+                    const rowNumber = isPending ? (currentPage - 1) * perPage + idx + 1 : idx + 1;
 
                     return (
                       <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="px-3 py-2 text-center text-gray-500 border-r border-gray-100 text-xs">{idx + 1}</td>
+                        <td className="px-3 py-2 text-center text-gray-500 border-r border-gray-100 text-xs">{rowNumber}</td>
                         <td className="px-3 py-2 text-center font-mono text-xs text-[#0891b2] border-r border-gray-100">{row.ackId}</td>
                         {isApproved && <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{khetmajurId}</td>}
                         <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{row.name}</td>
@@ -313,6 +355,68 @@ export default function ADAApplicantList() {
               </tbody>
             </table>
           </div>
+
+          {isPending && list.length > 0 && (
+            <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
+              <span>
+                Showing <strong>{Math.min(((pendingMeta.currentPage || page) - 1) * (pendingMeta.perPage || list.length || 20) + 1, pendingMeta.totalCount || list.length)}</strong> to{' '}
+                <strong>{Math.min((pendingMeta.currentPage || page) * (pendingMeta.perPage || list.length || 20), pendingMeta.totalCount || list.length)}</strong> of{' '}
+                <strong>{pendingMeta.totalCount || list.length}</strong> records
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => goPage(1)}
+                  disabled={(pendingMeta.currentPage || page) === 1}
+                  className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
+                >
+                  First
+                </button>
+                {visiblePages().map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => goPage(p)}
+                    className={`px-2.5 py-1 text-xs border rounded transition-colors ${
+                      p === (pendingMeta.currentPage || page)
+                        ? 'bg-[#3eb0c9] text-white border-[#3eb0c9]'
+                        : 'border-gray-300 hover:bg-gray-100'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                {totalPages > 3 && (pendingMeta.currentPage || page) < totalPages && (
+                  <>
+                    <span className="px-1 text-gray-400">...</span>
+                    <button
+                      type="button"
+                      onClick={() => goPage(totalPages)}
+                      className="px-2.5 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100"
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => goPage(page + 1)}
+                  disabled={(pendingMeta.currentPage || page) === totalPages}
+                  className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
+                >
+                  Next
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goPage(totalPages)}
+                  disabled={(pendingMeta.currentPage || page) === totalPages}
+                  className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
+                >
+                  Last
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 

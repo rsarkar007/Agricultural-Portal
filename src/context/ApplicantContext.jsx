@@ -48,6 +48,28 @@ export function ApplicantProvider({ children }) {
     mergedCount: 0,
     loadedAt: null,
   });
+  const [pendingMeta, setPendingMeta] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    perPage: 20,
+  });
+
+  const applyApplicants = useCallback((normalized) => {
+    const deletedApplicants = getDeletedFarmers();
+    const existingIds = new Set(normalized.map((app) => app.id));
+    const mergedApplicants = [
+      ...normalized,
+      ...deletedApplicants.filter((app) => !existingIds.has(app.id)),
+    ];
+
+    setApplicants(mergedApplicants);
+    setFarmersMeta({
+      serverCount: normalized.length,
+      mergedCount: mergedApplicants.length,
+      loadedAt: new Date().toISOString(),
+    });
+  }, []);
 
   const loadFarmers = useCallback(async () => {
     setLoadingFarmers(true);
@@ -56,19 +78,7 @@ export function ApplicantProvider({ children }) {
     try {
       const arr = await listFarmers();
       const normalized = arr.map(normalizeFarmer);
-      const deletedApplicants = getDeletedFarmers();
-      const existingIds = new Set(normalized.map((app) => app.id));
-      const mergedApplicants = [
-        ...normalized,
-        ...deletedApplicants.filter((app) => !existingIds.has(app.id)),
-      ];
-
-      setApplicants(mergedApplicants);
-      setFarmersMeta({
-        serverCount: normalized.length,
-        mergedCount: mergedApplicants.length,
-        loadedAt: new Date().toISOString(),
-      });
+      applyApplicants(normalized);
     } catch (e) {
       console.error('[Applicants] listFarmers error:', e.message);
       setApplicants([]);
@@ -81,27 +91,24 @@ export function ApplicantProvider({ children }) {
     } finally {
       setLoadingFarmers(false);
     }
-  }, []);
+  }, [applyApplicants]);
 
-  const loadADAPendings = useCallback(async () => {
+  const loadADAPendings = useCallback(async (page = 1) => {
     setLoadingFarmers(true);
     setFarmersError('');
 
     try {
-      const arr = await listADAPendings();
-      const normalized = arr.map(normalizeFarmer);
-      const deletedApplicants = getDeletedFarmers();
-      const existingIds = new Set(normalized.map((app) => app.id));
-      const mergedApplicants = [
-        ...normalized,
-        ...deletedApplicants.filter((app) => !existingIds.has(app.id)),
-      ];
-
-      setApplicants(mergedApplicants);
-      setFarmersMeta({
-        serverCount: normalized.length,
-        mergedCount: mergedApplicants.length,
-        loadedAt: new Date().toISOString(),
+      const { items, meta } = await listADAPendings(page);
+      const normalized = items.map((item) => ({
+        ...normalizeFarmer(item),
+        status: 'pending',
+      }));
+      applyApplicants(normalized);
+      setPendingMeta({
+        currentPage: meta?.current_page || page,
+        totalPages: meta?.total_pages || 1,
+        totalCount: meta?.total_count || normalized.length,
+        perPage: meta?.per_page || 20,
       });
     } catch (e) {
       console.error('[Applicants] listADAPendings error:', e.message);
@@ -112,10 +119,16 @@ export function ApplicantProvider({ children }) {
         mergedCount: 0,
         loadedAt: null,
       });
+      setPendingMeta({
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        perPage: 20,
+      });
     } finally {
       setLoadingFarmers(false);
     }
-  }, []);
+  }, [applyApplicants]);
 
   const loadADAApproved = useCallback(async () => {
     setLoadingFarmers(true);
@@ -123,20 +136,11 @@ export function ApplicantProvider({ children }) {
 
     try {
       const arr = await listADAApproved();
-      const normalized = arr.map(normalizeFarmer);
-      const deletedApplicants = getDeletedFarmers();
-      const existingIds = new Set(normalized.map((app) => app.id));
-      const mergedApplicants = [
-        ...normalized,
-        ...deletedApplicants.filter((app) => !existingIds.has(app.id)),
-      ];
-
-      setApplicants(mergedApplicants);
-      setFarmersMeta({
-        serverCount: normalized.length,
-        mergedCount: mergedApplicants.length,
-        loadedAt: new Date().toISOString(),
-      });
+      const normalized = arr.map((item) => ({
+        ...normalizeFarmer(item),
+        status: 'approved',
+      }));
+      applyApplicants(normalized);
     } catch (e) {
       console.error('[Applicants] listADAApproved error:', e.message);
       setApplicants([]);
@@ -149,7 +153,7 @@ export function ApplicantProvider({ children }) {
     } finally {
       setLoadingFarmers(false);
     }
-  }, []);
+  }, [applyApplicants]);
 
   const loadADARejected = useCallback(async () => {
     setLoadingFarmers(true);
@@ -157,20 +161,12 @@ export function ApplicantProvider({ children }) {
 
     try {
       const arr = await listADARejected();
-      const normalized = arr.map(normalizeFarmer);
-      const deletedApplicants = getDeletedFarmers();
-      const existingIds = new Set(normalized.map((app) => app.id));
-      const mergedApplicants = [
-        ...normalized,
-        ...deletedApplicants.filter((app) => !existingIds.has(app.id)),
-      ];
-
-      setApplicants(mergedApplicants);
-      setFarmersMeta({
-        serverCount: normalized.length,
-        mergedCount: mergedApplicants.length,
-        loadedAt: new Date().toISOString(),
-      });
+      const normalized = arr.map((item) => ({
+        ...normalizeFarmer(item),
+        status: 'rejected',
+        is_rejected: true,
+      }));
+      applyApplicants(normalized);
     } catch (e) {
       console.error('[Applicants] listADARejected error:', e.message);
       setApplicants([]);
@@ -183,7 +179,7 @@ export function ApplicantProvider({ children }) {
     } finally {
       setLoadingFarmers(false);
     }
-  }, []);
+  }, [applyApplicants]);
 
   const loadADAReverted = useCallback(async () => {
     setLoadingFarmers(true);
@@ -191,20 +187,12 @@ export function ApplicantProvider({ children }) {
 
     try {
       const arr = await listADAReverted();
-      const normalized = arr.map(normalizeFarmer);
-      const deletedApplicants = getDeletedFarmers();
-      const existingIds = new Set(normalized.map((app) => app.id));
-      const mergedApplicants = [
-        ...normalized,
-        ...deletedApplicants.filter((app) => !existingIds.has(app.id)),
-      ];
-
-      setApplicants(mergedApplicants);
-      setFarmersMeta({
-        serverCount: normalized.length,
-        mergedCount: mergedApplicants.length,
-        loadedAt: new Date().toISOString(),
-      });
+      const normalized = arr.map((item) => ({
+        ...normalizeFarmer(item),
+        status: 'reverted',
+        is_reverted: true,
+      }));
+      applyApplicants(normalized);
     } catch (e) {
       console.error('[Applicants] listADAReverted error:', e.message);
       setApplicants([]);
@@ -217,7 +205,7 @@ export function ApplicantProvider({ children }) {
     } finally {
       setLoadingFarmers(false);
     }
-  }, []);
+  }, [applyApplicants]);
 
   const addApplicant = async ({ name, aadhaar, mobile }, user) => {
     if (!user?.id) throw new Error('User not loaded');
@@ -307,6 +295,7 @@ export function ApplicantProvider({ children }) {
         loadingFarmers,
         farmersError,
         farmersMeta,
+        pendingMeta,
         loadFarmers,
         loadADAPendings,
         loadADAApproved,

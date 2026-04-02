@@ -467,9 +467,9 @@ export async function listFarmers() {
   return extractCollection(data, ['farmer_lists', 'farmers', 'items', 'records']);
 }
 
-export async function listADAPendings() {
-  const data = await apiGet('/v1/ada_pendings', { auth: true });
-  return extractCollection(data, [
+export async function listADAPendings(page = 1) {
+  const data = await apiGet(`/v1/ada_pendings?page=${page}`, { auth: true });
+  const items = extractCollection(data, [
     'ada_pendings',
     'pending_lists',
     'pending_list',
@@ -478,6 +478,11 @@ export async function listADAPendings() {
     'items',
     'records',
   ]);
+
+  return {
+    items,
+    meta: data?.meta || data?.data?.meta || {},
+  };
 }
 
 export async function listADAApproved() {
@@ -641,6 +646,71 @@ export async function createAgent(data) {
 
   if (!res.ok) throw new Error(extractError(json));
   return json;
+}
+
+export function normalizeMember(member) {
+  const source = member?.member || member?.user || member || {};
+  const profile = source.profile || source.profile_attributes || {};
+  const roleSource = source.role || source.user_role || source.member_role || {};
+  const rawStatus =
+    source.status ??
+    source.state ??
+    source.approval_status ??
+    source.active_status ??
+    source.member_status ??
+    source.current_status ??
+    source.active ??
+    source.is_active ??
+    source.enabled ??
+    source.is_enabled ??
+    source.toggle_active ??
+    source.user?.status ??
+    source.user?.state ??
+    source.user?.active ??
+    source.user?.is_active ??
+    source.user?.enabled ??
+    source.user?.is_enabled;
+
+  const normalizedStatus = String(rawStatus ?? '').toLowerCase();
+  const active =
+    rawStatus === true ||
+    rawStatus === 1 ||
+    rawStatus === '1' ||
+    normalizedStatus === 'true' ||
+    normalizedStatus === 'active' ||
+    normalizedStatus === 'approved' ||
+    normalizedStatus === 'enabled' ||
+    normalizedStatus === 'yes';
+
+  return {
+    id: source.id || source.member_id || source.user_id,
+    name:
+      source.name ||
+      [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim() ||
+      [source.first_name, source.last_name].filter(Boolean).join(' ').trim() ||
+      source.email ||
+      '',
+    email: source.email || '',
+    mobile: source.mobile || source.mobile_no || '',
+    role:
+      source.role_name ||
+      roleSource.name ||
+      roleSource.role_name ||
+      (typeof source.role === 'string' ? source.role : '') ||
+      '',
+    status: active ? 'active' : 'inactive',
+    active,
+  };
+}
+
+export async function listMembers() {
+  const data = await apiGet('/v1/members', { auth: true });
+  return extractCollection(data, ['members', 'member_lists', 'items', 'records']);
+}
+
+export async function toggleMemberActive(id) {
+  const data = await apiPatchJSON(`/v1/members/${id}/toggle_active`, {}, { auth: true });
+  return data?.data || data?.member || data;
 }
 
 export async function listAgents() {
