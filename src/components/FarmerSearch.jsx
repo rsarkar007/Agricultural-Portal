@@ -274,7 +274,7 @@
 // export default FarmerSearch;
 
 import { useState } from 'react';
-import { normalizeFarmer } from '../api/client';
+import { getAccessToken, normalizeFarmer } from '../api/client';
 
 const FarmerSearch = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -293,8 +293,7 @@ const FarmerSearch = () => {
         setResults(null);
 
         try {
-            const stored = sessionStorage.getItem('portalUser');
-            const token = stored ? JSON.parse(stored)?.access_token : null;
+            const token = getAccessToken();
 
             if (!token) {
                 throw new Error("User not logged in. Token missing.");

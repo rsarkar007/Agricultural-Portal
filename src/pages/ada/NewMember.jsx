@@ -38,9 +38,7 @@ export default function NewMember() {
 
     // Get available districts based on role
     const getAvailableDistricts = () => {
-        if (formData.role === "ADA") {
-            return districts.filter((d) => d.id === currentUser.working_zone.district_id);
-        } else if (formData.role === "Gramdoot") {
+        if (formData.role === "Gramdoot" || formData.role === "Audit GD") {
             return districts;
         }
         return [];
@@ -72,19 +70,9 @@ export default function NewMember() {
         }
     }, [formData.block_id, loadGpsByBlock]);
 
-    // Handle role change - auto-select ADA district if ADA role
+    // Reset dependent selections when role changes
     useEffect(() => {
-        if (formData.role === "ADA" && districts.length > 0) {
-            const adaDistrict = districts.find((d) => d.id === currentUser.working_zone.district_id);
-            if (adaDistrict) {
-                setFormData((prev) => ({
-                    ...prev,
-                    district_id: adaDistrict.id,
-                    block_id: "",
-                    gram_panchayat_id: "",
-                }));
-            }
-        } else if (formData.role === "Gramdoot") {
+        if (formData.role === "Gramdoot" || formData.role === "Audit GD") {
             setFormData((prev) => ({
                 ...prev,
                 district_id: "",
@@ -92,7 +80,7 @@ export default function NewMember() {
                 gram_panchayat_id: "",
             }));
         }
-    }, [formData.role, districts.length]);
+    }, [formData.role]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -313,7 +301,7 @@ export default function NewMember() {
                                         className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
                                     >
                                         <option value="Gramdoot">Gramdoot</option>
-                                        <option value="ADA">ADA</option>
+                                        <option value="Audit GD">Audit GD</option>
                                     </select>
                                 </div>
 

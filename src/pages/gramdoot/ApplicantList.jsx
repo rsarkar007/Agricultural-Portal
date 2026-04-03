@@ -107,16 +107,16 @@ export default function ApplicantList() {
       </div>
 
       <h3 className="text-[#0891b2] font-semibold text-sm mb-3">
-        Registered Applicant List
+        Registered Applicant List: {farmersMeta.serverCount}
       </h3>
 
       <div className="mb-3 flex flex-wrap items-center gap-3 text-xs">
-        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
+        {/* <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
           API farmers: {farmersMeta.serverCount}
         </span>
         <span className="inline-flex items-center rounded-full bg-cyan-50 px-3 py-1 font-medium text-cyan-700">
           Visible in UI: {visible.length}
-        </span>
+        </span> */}
         {farmersMeta.loadedAt && (
           <span className="text-gray-500">
             Last loaded: {new Date(farmersMeta.loadedAt).toLocaleString()}
@@ -236,8 +236,8 @@ export default function ApplicantList() {
                 key={p}
                 onClick={() => goPage(p)}
                 className={`px-2.5 py-1 text-xs border rounded transition-colors ${p === page
-                    ? 'bg-[#1565c0] text-white border-[#1565c0]'
-                    : 'border-gray-300 hover:bg-gray-100'
+                  ? 'bg-[#1565c0] text-white border-[#1565c0]'
+                  : 'border-gray-300 hover:bg-gray-100'
                   }`}
               >
                 {p}

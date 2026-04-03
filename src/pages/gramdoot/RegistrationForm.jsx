@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApplicants } from '../../context/ApplicantContext';
@@ -7,13 +7,23 @@ import { useDataDirs } from '../../context/DataDirsContext';
 export default function RegistrationForm() {
   const { user } = useAuth();
   const { addApplicant } = useApplicants();
-  const { blockName, districtName } = useDataDirs();
+  const { blockName, districtName, loadDistricts, loadBlocksByDistrict } = useDataDirs();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ name: '', aadhaar: '', mobile: '' });
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    loadDistricts();
+  }, [loadDistricts]);
+
+  useEffect(() => {
+    if (user?.working_zone?.district_id) {
+      loadBlocksByDistrict(user.working_zone.district_id);
+    }
+  }, [user?.working_zone?.district_id, loadBlocksByDistrict]);
 
   const validate = () => {
     const e = {};
