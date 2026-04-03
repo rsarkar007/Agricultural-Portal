@@ -31,8 +31,15 @@ function saveStatus(id, status) {
 function saveDeletedApplicant(applicant) {
   if (!applicant?.id) return;
   const map = JSON.parse(sessionStorage.getItem('deletedFarmersMap') || '{}');
+  const maskedAadhaar = applicant.aadhaar ? `XXXX-XXXX-${String(applicant.aadhaar).slice(-4)}` : '';
+  const maskedMobile = applicant.mobile ? `XXXXXX${String(applicant.mobile).slice(-4)}` : '';
+
   map[applicant.id] = {
-    ...applicant,
+    id: applicant.id,
+    ackId: applicant.ackId || '',
+    name: applicant.name || '',
+    aadhaar: maskedAadhaar,
+    mobile: maskedMobile,
     status: 'deleted',
     is_deleted: true,
   };

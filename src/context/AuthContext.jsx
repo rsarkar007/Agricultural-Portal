@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { clearAuthTokens, getAccessToken, setAuthTokens } from '../api/client';
 
 const AUTH_API = '/api/v1/login';
 
@@ -38,21 +39,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    localStorage.removeItem('km_applicants');
+
     const stored = sessionStorage.getItem('portalUser');
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (!parsed.token_expires_at || Date.now() < parsed.token_expires_at || parsed.refresh_token) {
-        setUser(parsed);
-      } else {
-        sessionStorage.removeItem('portalUser');
-      }
+      sessionStorage.removeItem('portalUser');
+      setUser(null);
     }
     setLoading(false);
   }, []);
 
   useEffect(() => {
     if (!user?.token_expires_at) return;
-    if (user.refresh_token) return;
 
     const msLeft = user.token_expires_at - Date.now();
 
@@ -120,19 +119,18 @@ export function AuthProvider({ children }) {
       name,
       role,
       working_zone,
-      access_token,
-      refresh_token,
       token_type: 'Bearer',
       token_expires_at,
     };
 
+    setAuthTokens({ accessToken: access_token, refreshToken: refresh_token });
     sessionStorage.setItem('portalUser', JSON.stringify(sessionUser));
     setUser(sessionUser);
     return { success: true, user: sessionUser };
   };
 
   const logout = async () => {
-    const token = user?.access_token || JSON.parse(sessionStorage.getItem('portalUser') || '{}')?.access_token;
+    const token = getAccessToken();
 
     if (token) {
       try {
@@ -148,6 +146,7 @@ export function AuthProvider({ children }) {
       }
     }
 
+    clearAuthTokens();
     sessionStorage.removeItem('portalUser');
     setUser(null);
   };

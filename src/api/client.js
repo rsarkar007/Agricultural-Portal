@@ -136,40 +136,39 @@
  */
 
 const BASE = '/api';
+let memoryAccessToken = null;
+let memoryRefreshToken = null;
+
+export function setAuthTokens({ accessToken = null, refreshToken = null } = {}) {
+  memoryAccessToken = accessToken;
+  memoryRefreshToken = refreshToken;
+}
+
+export function clearAuthTokens() {
+  memoryAccessToken = null;
+  memoryRefreshToken = null;
+}
+
+export function getAccessToken() {
+  return memoryAccessToken;
+}
 
 function getToken() {
-  try {
-    const stored = sessionStorage.getItem('portalUser');
-    return stored ? JSON.parse(stored)?.access_token : null;
-  } catch {
-    return null;
-  }
+  return memoryAccessToken;
 }
 
 function getRefreshToken() {
-  try {
-    const stored = sessionStorage.getItem('portalUser');
-    return stored ? JSON.parse(stored)?.refresh_token : null;
-  } catch {
-    return null;
-  }
+  return memoryRefreshToken;
 }
 
-function storeUpdatedToken(accessToken, refreshToken) {
+function storeUpdatedToken(accessToken, refreshToken, tokenExpiresAt = null) {
+  setAuthTokens({ accessToken, refreshToken: refreshToken ?? memoryRefreshToken });
+
   const stored = sessionStorage.getItem('portalUser');
-  if (!stored || !accessToken) return;
+  if (!stored) return;
 
   const user = JSON.parse(stored);
-  user.access_token = accessToken;
-
-  if (refreshToken) {
-    user.refresh_token = refreshToken;
-  }
-
-  try {
-    const payload = JSON.parse(atob(accessToken.split('.')[1]));
-    if (payload.exp) user.token_expires_at = payload.exp * 1000;
-  } catch {}
+  user.token_expires_at = tokenExpiresAt;
 
   sessionStorage.setItem('portalUser', JSON.stringify(user));
 }
@@ -212,7 +211,13 @@ async function refreshAccessToken() {
         continue;
       }
 
-      storeUpdatedToken(newAccessToken, newRefreshToken);
+      let tokenExpiresAt = null;
+      try {
+        const payload = JSON.parse(atob(newAccessToken.split('.')[1]));
+        if (payload.exp) tokenExpiresAt = payload.exp * 1000;
+      } catch {}
+
+      storeUpdatedToken(newAccessToken, newRefreshToken, tokenExpiresAt);
       console.info('[AUTH] Refresh succeeded.');
       return newAccessToken;
     } catch (error) {
@@ -243,6 +248,7 @@ async function fetchWithAuthRetry(path, options = {}, auth = false) {
       console.warn('[AUTH] Retried protected request:', res.status, path);
     } else {
       console.warn('[AUTH] Refresh failed. Clearing session and redirecting to home.');
+      clearAuthTokens();
       sessionStorage.removeItem('portalUser');
       window.location.href = '/';
     }
