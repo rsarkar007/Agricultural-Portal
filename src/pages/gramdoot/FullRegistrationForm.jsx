@@ -103,6 +103,7 @@ export default function FullRegistrationForm() {
   const {
     districts,
     blocksByDistrict, gpsByBlock, villagesByGP, mouzasByBlock, policeStationsByDistrict,
+    loadDistricts, loadBlocksByDistrict, loadGpsByBlock,
   } = useDataDirs();
   const navigate = useNavigate();
   const { id } = useParams();
@@ -147,6 +148,22 @@ export default function FullRegistrationForm() {
     if (!gpMounted.current) { gpMounted.current = true; return; }
     setForm((f) => ({ ...f, village: '' }));
   }, [form.gramPanchayat]);
+
+  useEffect(() => {
+    loadDistricts();
+  }, [loadDistricts]);
+
+  useEffect(() => {
+    if (form.district) {
+      loadBlocksByDistrict(form.district);
+    }
+  }, [form.district, loadBlocksByDistrict]);
+
+  useEffect(() => {
+    if (form.block) {
+      loadGpsByBlock(form.block);
+    }
+  }, [form.block, loadGpsByBlock]);
 
   if (!record) {
     return (

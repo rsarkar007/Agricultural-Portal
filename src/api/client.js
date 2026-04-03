@@ -467,6 +467,23 @@ export async function listFarmers() {
   return extractCollection(data, ['farmer_lists', 'farmers', 'items', 'records']);
 }
 
+export async function listDistricts() {
+  const data = await apiGet('/v1/districts', { auth: true });
+  return extractCollection(data, ['districts', 'items', 'records', 'data']);
+}
+
+export async function listBlocks(districtId) {
+  if (!districtId) return [];
+  const data = await apiGet(`/v1/blocks?district_id=${encodeURIComponent(districtId)}`, { auth: true });
+  return extractCollection(data, ['blocks', 'items', 'records', 'data']);
+}
+
+export async function listGramPanchayats(blockId) {
+  if (!blockId) return [];
+  const data = await apiGet(`/v1/gram_panchayats?block_id=${encodeURIComponent(blockId)}`, { auth: true });
+  return extractCollection(data, ['gram_panchayats', 'items', 'records', 'data']);
+}
+
 export async function listADAPendings(page = 1) {
   const data = await apiGet(`/v1/ada_pendings?page=${page}`, { auth: true });
   const items = extractCollection(data, [

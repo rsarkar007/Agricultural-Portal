@@ -3,7 +3,16 @@ import { createAgent } from "../../api/client"; // ✅ Correct API
 import { useDataDirs } from "../../context/DataDirsContext";
 
 export default function NewMember() {
-    const { districts, blocks, gramPanchayats, loading: dataLoading } = useDataDirs();
+    const {
+        districts,
+        blocksByDistrict,
+        gpsByBlock,
+        loadDistricts,
+        loadBlocksByDistrict,
+        loadGpsByBlock,
+        loading: dataLoading,
+        locationLoading,
+    } = useDataDirs();
 
     const [formData, setFormData] = useState({
         email: "",
@@ -39,19 +48,29 @@ export default function NewMember() {
 
     // Get available blocks based on selected district
     const getAvailableBlocks = () => {
-        if (formData.district_id) {
-            return blocks.filter((b) => b.district_id === Number(formData.district_id));
-        }
-        return [];
+        return blocksByDistrict(formData.district_id);
     };
 
     // Get available GPs based on selected block
     const getAvailableGPs = () => {
-        if (formData.block_id) {
-            return gramPanchayats.filter((g) => g.block_id === Number(formData.block_id));
-        }
-        return [];
+        return gpsByBlock(formData.block_id);
     };
+
+    useEffect(() => {
+        loadDistricts();
+    }, [loadDistricts]);
+
+    useEffect(() => {
+        if (formData.district_id) {
+            loadBlocksByDistrict(formData.district_id);
+        }
+    }, [formData.district_id, loadBlocksByDistrict]);
+
+    useEffect(() => {
+        if (formData.block_id) {
+            loadGpsByBlock(formData.block_id);
+        }
+    }, [formData.block_id, loadGpsByBlock]);
 
     // Handle role change - auto-select ADA district if ADA role
     useEffect(() => {
@@ -358,7 +377,7 @@ export default function NewMember() {
                                         name="district_id"
                                         value={formData.district_id}
                                         onChange={handleDistrictChange}
-                                        disabled={dataLoading}
+                                        disabled={dataLoading || locationLoading.districts}
                                         className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
                                     >
                                         <option value="">Select District</option>
@@ -380,7 +399,7 @@ export default function NewMember() {
                                         name="block_id"
                                         value={formData.block_id}
                                         onChange={handleBlockChange}
-                                        disabled={!formData.district_id || dataLoading}
+                                        disabled={!formData.district_id || dataLoading || locationLoading.blocks}
                                         className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
                                     >
                                         <option value="">Select Block</option>
@@ -411,7 +430,7 @@ export default function NewMember() {
                                                 gram_panchayat_id: Number(e.target.value) || "",
                                             }));
                                         }}
-                                        disabled={!formData.block_id || dataLoading}
+                                        disabled={!formData.block_id || dataLoading || locationLoading.gramPanchayats}
                                         className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
                                     >
                                         <option value="">Select GP</option>
