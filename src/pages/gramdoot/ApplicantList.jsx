@@ -129,7 +129,7 @@ export default function ApplicantList() {
         )}
       </div>
 
-      {loadingFarmers && (
+      {/* {loadingFarmers && (
         <div className="mb-4 rounded border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
           Loading farmer list from API...
         </div>
@@ -139,7 +139,7 @@ export default function ApplicantList() {
         <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           Failed to load farmer list: {farmersError}
         </div>
-      )}
+      )} */}
 
       <div className="overflow-x-auto border border-gray-200 rounded">
         <table className="w-full text-sm">
@@ -235,11 +235,10 @@ export default function ApplicantList() {
               <button
                 key={p}
                 onClick={() => goPage(p)}
-                className={`px-2.5 py-1 text-xs border rounded transition-colors ${
-                  p === page
+                className={`px-2.5 py-1 text-xs border rounded transition-colors ${p === page
                     ? 'bg-[#1565c0] text-white border-[#1565c0]'
                     : 'border-gray-300 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 {p}
               </button>

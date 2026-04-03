@@ -1018,6 +1018,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useApplicants } from '../context/ApplicantContext';
+import {
+  listFarmers,
+  listADAPendings,
+  listADAApproved,
+  listADARejected,
+  listADAReverted,
+  normalizeFarmer,
+} from '../api/client';
 
 const ROLE_HOME = {
   gramdoot: '/portal/dashboard',
@@ -1043,6 +1051,7 @@ export default function Header() {
   const [adaMenuOpen, setAdaMenuOpen] = useState(false);
   const [misMenuOpen, setMisMenuOpen] = useState(false);
   const [memberMenuOpen, setMemberMenuOpen] = useState(false);
+  const [misDownloading, setMisDownloading] = useState('');
 
   const quickRef = useRef(null);
   const adaRef = useRef(null);
@@ -1122,16 +1131,58 @@ export default function Header() {
     URL.revokeObjectURL(url);
   };
 
-  const handleMisDownload = (type) => {
-    const statusLists = {
-      submitted: applicants.filter((app) => app.status !== 'deleted'),
-      approved: applicants.filter((app) => app.status === 'approved'),
-      rejected: applicants.filter((app) => app.status === 'rejected'),
-      pending: applicants.filter((app) => app.status === 'pending'),
-      reverted: applicants.filter((app) => app.status === 'reverted'),
-      sent_to_bank: applicants.filter((app) => app.status === 'sent_to_bank'),
-    };
+  const fetchPagedStatusList = async (loader, forcedStatus) => {
+    const firstPage = await loader(1);
+    const firstItems = (firstPage.items || []).map((item) => ({
+      ...normalizeFarmer(item),
+      ...(forcedStatus ? { status: forcedStatus } : {}),
+    }));
+    const totalPages = Math.max(1, firstPage.meta?.total_pages || 1);
 
+    if (totalPages === 1) return firstItems;
+
+    const remaining = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, index) => loader(index + 2))
+    );
+
+    const remainingItems = remaining.flatMap((pageData) =>
+      (pageData.items || []).map((item) => ({
+        ...normalizeFarmer(item),
+        ...(forcedStatus ? { status: forcedStatus } : {}),
+      }))
+    );
+
+    return [...firstItems, ...remainingItems];
+  };
+
+  const fetchMisRows = async (type) => {
+    switch (type) {
+      case 'approved':
+        return fetchPagedStatusList(listADAApproved, 'approved');
+      case 'pending':
+        return fetchPagedStatusList(listADAPendings, 'pending');
+      case 'rejected':
+        return fetchPagedStatusList(listADARejected, 'rejected');
+      case 'reverted':
+        return fetchPagedStatusList(listADAReverted, 'reverted');
+      case 'submitted': {
+        const rows = await listFarmers();
+        return rows
+          .map(normalizeFarmer)
+          .filter((app) => app.status !== 'deleted');
+      }
+      case 'sent_to_bank': {
+        const rows = await listFarmers();
+        return rows
+          .map(normalizeFarmer)
+          .filter((app) => app.status === 'sent_to_bank');
+      }
+      default:
+        return [];
+    }
+  };
+
+  const handleMisDownload = async (type) => {
     const labels = {
       submitted: 'submitted_list',
       approved: 'approved_list',
@@ -1141,7 +1192,16 @@ export default function Header() {
       sent_to_bank: 'send_to_bank_list',
     };
 
-    downloadApplicantsCsv(labels[type], statusLists[type] || []);
+    try {
+      setMisDownloading(type);
+      const rows = await fetchMisRows(type);
+      downloadApplicantsCsv(labels[type], rows);
+    } catch (error) {
+      window.alert(error.message || 'CSV download failed');
+    } finally {
+      setMisDownloading('');
+    }
+
     setMisMenuOpen(false);
     setIsMenuOpen(false);
   };
@@ -1266,12 +1326,12 @@ export default function Header() {
 
                   {misMenuOpen && (
                     <div className="absolute mt-2 w-56 bg-white border rounded shadow-lg z-50">
-                      <button type="button" onClick={() => handleMisDownload('submitted')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Submitted List</button>
-                      <button type="button" onClick={() => handleMisDownload('approved')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Approved List</button>
-                      <button type="button" onClick={() => handleMisDownload('rejected')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Rejected List</button>
-                      <button type="button" onClick={() => handleMisDownload('pending')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Pending List</button>
-                      <button type="button" onClick={() => handleMisDownload('reverted')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Reverted List</button>
-                      <button type="button" onClick={() => handleMisDownload('sent_to_bank')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Send to Bank List</button>
+                      <button type="button" onClick={() => handleMisDownload('submitted')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'submitted' ? 'Downloading Submitted List...' : 'Download Submitted List'}</button>
+                      <button type="button" onClick={() => handleMisDownload('approved')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'approved' ? 'Downloading Approved List...' : 'Download Approved List'}</button>
+                      <button type="button" onClick={() => handleMisDownload('rejected')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'rejected' ? 'Downloading Rejected List...' : 'Download Rejected List'}</button>
+                      <button type="button" onClick={() => handleMisDownload('pending')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'pending' ? 'Downloading Pending List...' : 'Download Pending List'}</button>
+                      <button type="button" onClick={() => handleMisDownload('reverted')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'reverted' ? 'Downloading Reverted List...' : 'Download Reverted List'}</button>
+                      <button type="button" onClick={() => handleMisDownload('sent_to_bank')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'sent_to_bank' ? 'Downloading Send to Bank List...' : 'Download Send to Bank List'}</button>
                     </div>
                   )}
                 </div>
@@ -1359,12 +1419,12 @@ export default function Header() {
 
                 <div>
                   <p className="font-semibold">MIS</p>
-                  <button type="button" onClick={() => handleMisDownload('submitted')} className="block pl-3 py-1 text-left">Download Submitted List</button>
-                  <button type="button" onClick={() => handleMisDownload('approved')} className="block pl-3 py-1 text-left">Download Approved List</button>
-                  <button type="button" onClick={() => handleMisDownload('rejected')} className="block pl-3 py-1 text-left">Download Rejected List</button>
-                  <button type="button" onClick={() => handleMisDownload('pending')} className="block pl-3 py-1 text-left">Download Pending List</button>
-                  <button type="button" onClick={() => handleMisDownload('reverted')} className="block pl-3 py-1 text-left">Download Reverted List</button>
-                  <button type="button" onClick={() => handleMisDownload('sent_to_bank')} className="block pl-3 py-1 text-left">Download Send to Bank List</button>
+                  <button type="button" onClick={() => handleMisDownload('submitted')} disabled={Boolean(misDownloading)} className="block pl-3 py-1 text-left disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'submitted' ? 'Downloading Submitted List...' : 'Download Submitted List'}</button>
+                  <button type="button" onClick={() => handleMisDownload('approved')} disabled={Boolean(misDownloading)} className="block pl-3 py-1 text-left disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'approved' ? 'Downloading Approved List...' : 'Download Approved List'}</button>
+                  <button type="button" onClick={() => handleMisDownload('rejected')} disabled={Boolean(misDownloading)} className="block pl-3 py-1 text-left disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'rejected' ? 'Downloading Rejected List...' : 'Download Rejected List'}</button>
+                  <button type="button" onClick={() => handleMisDownload('pending')} disabled={Boolean(misDownloading)} className="block pl-3 py-1 text-left disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'pending' ? 'Downloading Pending List...' : 'Download Pending List'}</button>
+                  <button type="button" onClick={() => handleMisDownload('reverted')} disabled={Boolean(misDownloading)} className="block pl-3 py-1 text-left disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'reverted' ? 'Downloading Reverted List...' : 'Download Reverted List'}</button>
+                  <button type="button" onClick={() => handleMisDownload('sent_to_bank')} disabled={Boolean(misDownloading)} className="block pl-3 py-1 text-left disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'sent_to_bank' ? 'Downloading Send to Bank List...' : 'Download Send to Bank List'}</button>
                 </div>
 
                 <div>
