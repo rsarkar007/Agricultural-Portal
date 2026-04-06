@@ -649,6 +649,43 @@ export async function downloadADABulkApproveCsvTemplate() {
   return { blob, filename };
 }
 
+export async function snoBulkApprove() {
+  const res = await fetchWithAuthRetry('/v1/ada_pendings/sno_bulk_approve', {
+    method: 'POST',
+  }, true);
+
+  const text = await res.text();
+  let data = {};
+  try { data = JSON.parse(text); } catch {}
+
+  if (!res.ok) throw new Error(extractError(data, `HTTP ${res.status}`));
+  return data;
+}
+
+export async function generateADAPaymentFile() {
+  const res = await fetchWithAuthRetry('/v1/ada_pendings/generate_payment_file', {
+    method: 'POST',
+  }, true);
+
+  if (!res.ok) {
+    const text = await res.text();
+    let json = {};
+    try { json = JSON.parse(text); } catch {}
+    throw new Error(extractError(json, `HTTP ${res.status}`));
+  }
+
+  const disposition = res.headers.get('content-disposition');
+  const contentType = res.headers.get('content-type') || '';
+
+  if (disposition || !contentType.includes('application/json')) {
+    const blob = await res.blob();
+    const filename = extractFilenameFromDisposition(disposition, 'payment_file.csv');
+    return { blob, filename };
+  }
+
+  return res.json();
+}
+
 export async function getFarmer(id) {
   const data = await apiGet(`/v1/farmers/${id}`, { auth: true });
   return data?.data || data?.farmer || data;

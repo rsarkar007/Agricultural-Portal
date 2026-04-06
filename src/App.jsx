@@ -31,6 +31,7 @@ import ADAMembersList from './pages/ada/MemberList';
 import NewMember from './pages/ada/NewMember';
 import SNOPaymentFileList from './pages/sno/PaymentFileList';
 import SNODDAApprovedList from './pages/sno/ApprovedList';
+import SNOApprovedList from './pages/sno/SNOApprovedList';
 
 const GramdootDashboard = React.lazy(() => import('./pages/gramdoot/Dashboard'));
 const RegistrationForm = React.lazy(() => import('./pages/gramdoot/RegistrationForm'));
@@ -125,6 +126,8 @@ export default function App() {
                 element={<AppLayout wrapMain={false}><PortalRoute role="sno"><SNODashboard /></PortalRoute></AppLayout>} />
               <Route path="/portal/sno/approved"
                 element={<AppLayout wrapMain={false}><PortalRoute role="sno"><SNODDAApprovedList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/sno/sno_approved_list"
+                element={<AppLayout wrapMain={false}><PortalRoute role="sno"><SNOApprovedList /></PortalRoute></AppLayout>} />
               <Route path="/portal/sno/send_to_bank"
                 element={<AppLayout wrapMain={false}><PortalRoute role="sno"><ADASentToBankApplicantList /></PortalRoute></AppLayout>} />
               <Route path="/portal/sno/rejected_list"

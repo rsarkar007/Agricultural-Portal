@@ -380,7 +380,7 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={() => toggleDropdown('snoApplicant')}
-                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/sno/approved') || isPathActive('/portal/sno/send_to_bank') || isPathActive('/portal/sno/rejected_list') ? 'text-[#0891b2] font-semibold' : ''}`}
+                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/sno/approved') || isPathActive('/portal/sno/sno_approved_list') || isPathActive('/portal/sno/send_to_bank') || isPathActive('/portal/sno/rejected_list') ? 'text-[#0891b2] font-semibold' : ''}`}
                     >
                       Applicant List
                       <DropdownIcon />
@@ -389,6 +389,7 @@ export default function Header() {
                     {snoApplicantOpen && (
                       <div className="absolute mt-2 w-56 bg-white border rounded shadow-lg z-50">
                         <Link to="/portal/sno/approved" className="block px-4 py-2 hover:bg-gray-50">DDA Approved List</Link>
+                        <Link to="/portal/sno/sno_approved_list" className="block px-4 py-2 hover:bg-gray-50">SNO Approved List</Link>
                         <Link to="/portal/sno/send_to_bank" className="block px-4 py-2 hover:bg-gray-50">Send to Bank List</Link>
                         <Link to="/portal/sno/rejected_list" className="block px-4 py-2 hover:bg-gray-50">Rejected List</Link>
                       </div>
@@ -498,6 +499,7 @@ export default function Header() {
                 <div>
                   <p className="font-semibold">Applicant List</p>
                   <Link to="/portal/sno/approved" className="block pl-3 py-1">DDA Approved List</Link>
+                  <Link to="/portal/sno/sno_approved_list" className="block pl-3 py-1">SNO Approved List</Link>
                   <Link to="/portal/sno/send_to_bank" className="block pl-3 py-1">Send to Bank List</Link>
                   <Link to="/portal/sno/rejected_list" className="block pl-3 py-1">Rejected List</Link>
                 </div>
