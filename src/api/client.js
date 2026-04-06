@@ -271,6 +271,22 @@ async function fetchWithAuthRetry(path, options = {}, auth = false) {
   return res;
 }
 
+function extractFilenameFromDisposition(disposition, fallback = 'download.csv') {
+  if (!disposition) return fallback;
+
+  const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utfMatch?.[1]) {
+    return decodeURIComponent(utfMatch[1]);
+  }
+
+  const plainMatch = disposition.match(/filename="?([^"]+)"?/i);
+  if (plainMatch?.[1]) {
+    return plainMatch[1];
+  }
+
+  return fallback;
+}
+
 function extractError(data, fallback = 'Request failed') {
   if (data?.error_description) return data.error_description;
   if (data?.message) return data.message;
@@ -483,8 +499,28 @@ export function normalizeFarmer(f) {
 }
 
 export async function listFarmers() {
-  const data = await apiGet('/v1/farmers', { auth: true });
-  return extractCollection(data, ['farmer_lists', 'farmers', 'items', 'records']);
+  const getItems = (payload) => extractCollection(payload, ['farmer_lists', 'farmers', 'items', 'records']);
+  const getMeta = (payload) => payload?.meta || payload?.data?.meta || {};
+
+  const firstPage = await apiGet('/v1/farmers?page=1', { auth: true });
+  const firstItems = getItems(firstPage);
+  const firstMeta = getMeta(firstPage);
+  const totalPages = Math.max(1, Number(firstMeta?.total_pages) || 1);
+
+  if (totalPages === 1) {
+    return firstItems;
+  }
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) =>
+      apiGet(`/v1/farmers?page=${index + 2}`, { auth: true })
+    )
+  );
+
+  return [
+    ...firstItems,
+    ...remainingPages.flatMap((pageData) => getItems(pageData)),
+  ];
 }
 
 export async function listDistricts() {
@@ -574,6 +610,43 @@ export async function listADAReverted(page = 1) {
     items,
     meta: data?.meta || data?.data?.meta || {},
   };
+}
+
+export async function listADASentToBank(page = 1) {
+  const data = await apiGet(`/v1/ada_pendings/send_to_bank_list?page=${page}`, { auth: true });
+  const items = extractCollection(data, [
+    'ada_pendings',
+    'send_to_bank_lists',
+    'send_to_bank_list',
+    'farmers',
+    'farmer_lists',
+    'items',
+    'records',
+  ]);
+
+  return {
+    items,
+    meta: data?.meta || data?.data?.meta || {},
+  };
+}
+
+export async function downloadADABulkApproveCsvTemplate() {
+  const res = await fetchWithAuthRetry('/v1/ada_pendings/download_block_approve_csv', {}, true);
+
+  if (!res.ok) {
+    const text = await res.text();
+    let json = {};
+    try { json = JSON.parse(text); } catch {}
+    throw new Error(extractError(json, `HTTP ${res.status}`));
+  }
+
+  const blob = await res.blob();
+  const filename = extractFilenameFromDisposition(
+    res.headers.get('content-disposition'),
+    'bulk_approve_template.csv'
+  );
+
+  return { blob, filename };
 }
 
 export async function getFarmer(id) {

@@ -6,6 +6,7 @@ import {
   listADAApproved,
   listADARejected,
   listADAReverted,
+  listADASentToBank,
   normalizeFarmer,
   approveADAPending,
   rejectADAPending,
@@ -74,6 +75,12 @@ export function ApplicantProvider({ children }) {
     perPage: 20,
   });
   const [revertedMeta, setRevertedMeta] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    perPage: 20,
+  });
+  const [sentToBankMeta, setSentToBankMeta] = useState({
     currentPage: 1,
     totalPages: 1,
     totalCount: 0,
@@ -268,6 +275,43 @@ export function ApplicantProvider({ children }) {
     }
   }, [applyApplicants]);
 
+  const loadADASentToBank = useCallback(async (page = 1) => {
+    setLoadingFarmers(true);
+    setFarmersError('');
+
+    try {
+      const { items, meta } = await listADASentToBank(page);
+      const normalized = items.map((item) => ({
+        ...normalizeFarmer(item),
+        status: 'sent_to_bank',
+      }));
+      applyApplicants(normalized);
+      setSentToBankMeta({
+        currentPage: meta?.current_page || page,
+        totalPages: meta?.total_pages || 1,
+        totalCount: meta?.total_count || normalized.length,
+        perPage: meta?.per_page || 20,
+      });
+    } catch (e) {
+      console.error('[Applicants] listADASentToBank error:', e.message);
+      setApplicants([]);
+      setFarmersError(e.message || 'Failed to load ADA send to bank list');
+      setFarmersMeta({
+        serverCount: 0,
+        mergedCount: 0,
+        loadedAt: null,
+      });
+      setSentToBankMeta({
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        perPage: 20,
+      });
+    } finally {
+      setLoadingFarmers(false);
+    }
+  }, [applyApplicants]);
+
   const addApplicant = async ({ name, aadhaar, mobile }, user) => {
     if (!user?.id) throw new Error('User not loaded');
 
@@ -360,11 +404,13 @@ export function ApplicantProvider({ children }) {
         approvedMeta,
         rejectedMeta,
         revertedMeta,
+        sentToBankMeta,
         loadFarmers,
         loadADAPendings,
         loadADAApproved,
         loadADARejected,
         loadADAReverted,
+        loadADASentToBank,
         addApplicant,
         updateApplicant,
         approveApplicant,

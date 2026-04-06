@@ -1,162 +1,253 @@
-
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApplicants } from '../../context/ApplicantContext';
-import { useDataDirs } from '../../context/DataDirsContext';
 
 export default function SentToBankList() {
-    const { applicants, loadFarmers } = useApplicants();
-    const { districtName, blockName } = useDataDirs();
+  const navigate = useNavigate();
+  const { applicants, loadADASentToBank, sentToBankMeta } = useApplicants();
 
-    useEffect(() => { loadFarmers(); }, []);
+  const [ackInput, setAckInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [aadhaarInput, setAadhaarInput] = useState('');
+  const [mobileInput, setMobileInput] = useState('');
+  const [filters, setFilters] = useState({ ack: '', name: '', aadhaar: '', mobile: '' });
+  const [page, setPage] = useState(1);
 
-    // Search field states (applied only on Search click)
-    const [ackInput, setAckInput] = useState('');
-    const [nameInput, setNameInput] = useState('');
-    const [aadhaarInput, setAadhaarInput] = useState('');
-    const [mobileInput, setMobileInput] = useState('');
-    const [applied, setApplied] = useState({ ack: '', name: '', aadhaar: '', mobile: '' });
+  useEffect(() => {
+    loadADASentToBank(page);
+  }, [loadADASentToBank, page]);
 
-    const handleSearch = () => setApplied({ ack: ackInput, name: nameInput, aadhaar: aadhaarInput, mobile: mobileInput });
-    const handleReset = () => {
-        setAckInput(''); setNameInput(''); setAadhaarInput(''); setMobileInput('');
-        setApplied({ ack: '', name: '', aadhaar: '', mobile: '' });
-    };
+  const list = useMemo(() => {
+    return applicants
+      .filter((app) => app.status === 'sent_to_bank')
+      .filter((app) => {
+        return (
+          (!filters.ack || app.ackId?.toLowerCase().includes(filters.ack.toLowerCase())) &&
+          (!filters.name || app.name?.toLowerCase().includes(filters.name.toLowerCase())) &&
+          (!filters.aadhaar || app.aadhaar?.includes(filters.aadhaar)) &&
+          (!filters.mobile || app.mobile?.includes(filters.mobile))
+        );
+      });
+  }, [applicants, filters]);
 
-    // Filtered list: status === 'sent_to_bank' (adjust as per your API)
-    const list = useMemo(() => {
-        let arr = applicants.filter((a) => a.status === 'sent_to_bank');
-        if (applied.ack) arr = arr.filter((a) => a.acknowledgementId?.toLowerCase().includes(applied.ack.toLowerCase()));
-        if (applied.name) arr = arr.filter((a) => a.name?.toLowerCase().includes(applied.name.toLowerCase()));
-        if (applied.aadhaar) arr = arr.filter((a) => a.aadhaar?.includes(applied.aadhaar));
-        if (applied.mobile) arr = arr.filter((a) => a.mobile?.includes(applied.mobile));
-        return arr;
-    }, [applicants, applied]);
+  const totalPages = Math.max(1, sentToBankMeta.totalPages || 1);
+  const listCount = sentToBankMeta.totalCount || list.length;
 
-    return (
-        <>
-            <main className="grow w-full px-4 py-8">
-                <div className="max-w-7xl mx-auto">
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
-                    {/* Page heading */}
-                    <h2 className="text-base font-bold text-gray-700 tracking-widest uppercase mb-4">
-                        Send to Bank Search Application
-                    </h2>
+  const handleSearch = () => {
+    setFilters({
+      ack: ackInput,
+      name: nameInput,
+      aadhaar: aadhaarInput,
+      mobile: mobileInput,
+    });
+    setPage(1);
+  };
 
-                    {/* Search form */}
-                    <div className="mb-6">
-                        <div className="flex flex-wrap gap-3 items-end">
-                            <div className="flex flex-col gap-1">
-                                <label className="text-xs text-gray-600">Acknowledgement ID</label>
-                                <input
-                                    value={ackInput}
-                                    onChange={(e) => setAckInput(e.target.value)}
-                                    placeholder="Search by acknowledgement ID"
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm w-52 focus:outline-none focus:border-[#3eb0c9]"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-xs text-gray-600">Applicant Name</label>
-                                <input
-                                    value={nameInput}
-                                    onChange={(e) => setNameInput(e.target.value)}
-                                    placeholder="Search by name"
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm w-48 focus:outline-none focus:border-[#3eb0c9]"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-xs text-gray-600">Aadhar No</label>
-                                <input
-                                    value={aadhaarInput}
-                                    onChange={(e) => setAadhaarInput(e.target.value)}
-                                    placeholder="Search by Aadhaar"
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm w-40 focus:outline-none focus:border-[#3eb0c9]"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-xs text-gray-600">Mobile No</label>
-                                <input
-                                    value={mobileInput}
-                                    onChange={(e) => setMobileInput(e.target.value)}
-                                    placeholder="Search by mobile"
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm w-36 focus:outline-none focus:border-[#3eb0c9]"
-                                />
-                            </div>
-                            <div className="flex gap-2 pb-0.5">
-                                <button
-                                    onClick={handleSearch}
-                                    className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-1.5 rounded"
-                                >
-                                    Search
-                                </button>
-                                <button
-                                    onClick={handleReset}
-                                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-1.5 rounded transition-colors"
-                                >
-                                    Reset
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+  const handleReset = () => {
+    setAckInput('');
+    setNameInput('');
+    setAadhaarInput('');
+    setMobileInput('');
+    setFilters({ ack: '', name: '', aadhaar: '', mobile: '' });
+    setPage(1);
+  };
 
-                    {/* List heading */}
-                    <p className="text-[#0891b2] font-bold text-sm mb-2">Send to Bank Applicant List</p>
+  const goPage = (nextPage) => {
+    if (nextPage >= 1 && nextPage <= totalPages) setPage(nextPage);
+  };
 
-                    {/* Table */}
-                    <div className="overflow-x-auto border border-gray-200">
-                        <table className="w-full text-sm border-collapse">
-                            <thead>
-                                <tr className="bg-gray-50 text-gray-700 text-xs font-semibold border-b border-gray-200">
-                                    <th className="px-3 py-2.5 text-center border-r border-gray-200 w-10">#</th>
-                                    <th className="px-3 py-2.5 text-center border-r border-gray-200">Acknowledgement ID</th>
-                                    <th className="px-3 py-2.5 text-center border-r border-gray-200">Applicant Name</th>
-                                    <th className="px-3 py-2.5 text-center border-r border-gray-200">Aadhaar No</th>
-                                    <th className="px-3 py-2.5 text-center border-r border-gray-200">Mobile No</th>
-                                    <th className="px-3 py-2.5 text-center border-r border-gray-200">Bank Name</th>
-                                    <th className="px-3 py-2.5 text-center border-r border-gray-200">Branch Name</th>
-                                    <th className="px-3 py-2.5 text-center border-r border-gray-200">Account Number</th>
-                                    <th className="px-3 py-2.5 text-center border-r border-gray-200">IFSC</th>
-                                    <th className="px-3 py-2.5 text-center border-r border-gray-200">Present in KB(N)</th>
-                                    <th className="px-3 py-2.5 text-center border-r border-gray-200">Applied for Yuvasathi</th>
-                                    <th className="px-3 py-2.5 text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {list.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={12} className="text-center py-10 text-gray-400 text-sm">
-                                            No applications found.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    list.map((a, idx) => (
-                                        <tr key={a.id || idx} className="border-b border-gray-100 hover:bg-gray-50">
-                                            <td className="px-3 py-2 text-center text-gray-500 border-r border-gray-100 text-xs">{idx + 1}</td>
-                                            <td className="px-3 py-2 text-center font-mono text-xs text-[#0891b2] border-r border-gray-100">{a.acknowledgementId}</td>
-                                            <td className="px-3 py-2 text-center text-gray-700 text-xs border-r border-gray-100">{a.name}</td>
-                                            <td className="px-3 py-2 text-center font-mono text-xs text-gray-600 border-r border-gray-100">{a.aadhaar}</td>
-                                            <td className="px-3 py-2 text-center font-mono text-xs text-gray-600 border-r border-gray-100">{a.mobile}</td>
-                                            <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{a.bankName}</td>
-                                            <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{a.branchName}</td>
-                                            <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{a.accountNumber}</td>
-                                            <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{a.ifsc}</td>
-                                            <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{a.presentInKb ? 'Yes' : 'No'}</td>
-                                            <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{a.appliedForYuvasathi ? 'Yes' : 'No'}</td>
-                                            <td className="px-3 py-2 text-center">
-                                                <button className="text-blue-600 hover:underline">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 inline">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+  const visiblePages = () => {
+    const pages = [];
+    for (let index = 1; index <= Math.min(totalPages, 3); index += 1) pages.push(index);
+    return pages;
+  };
 
-                </div>
-            </main>
-        </>
-    );
+  return (
+    <main className="grow w-full px-4 py-8">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-base font-bold text-gray-700 tracking-widest uppercase mb-4">
+          Send to Bank Search Application
+        </h2>
+
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-3 items-end">
+            <FilterInput label="Acknowledgement ID" value={ackInput} onChange={setAckInput} />
+            <FilterInput label="Applicant Name" value={nameInput} onChange={setNameInput} />
+            <FilterInput label="Aadhar No" value={aadhaarInput} onChange={setAadhaarInput} narrow />
+            <FilterInput label="Mobile No" value={mobileInput} onChange={setMobileInput} narrow />
+
+            <div className="flex gap-2 pb-0.5">
+              <button
+                type="button"
+                onClick={handleSearch}
+                className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-1.5 rounded transition-colors"
+              >
+                Search
+              </button>
+              <button
+                type="button"
+                onClick={handleReset}
+                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-1.5 rounded transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[#0891b2] font-bold text-sm">
+            Send to Bank Applicant List ({listCount})
+          </p>
+          <button
+            type="button"
+            onClick={() => loadADASentToBank(page)}
+            className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-xs font-medium px-4 py-1.5 rounded transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
+
+        <div className="overflow-x-auto border border-gray-200 rounded">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-gray-50 text-gray-700 text-xs font-semibold border-b border-gray-200">
+                <th className="px-3 py-2.5 text-center border-r border-gray-200 w-10">#</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Acknowledgement ID</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Applicant Name</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Aadhaar No</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Mobile No</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Bank Name</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Branch Name</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Account Number</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">IFSC</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Present in KB(N)</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Applied for Yuvasathi</th>
+                <th className="px-3 py-2.5 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.length === 0 ? (
+                <tr>
+                  <td colSpan={12} className="text-center py-10 text-gray-400 text-sm">
+                    No applications found.
+                  </td>
+                </tr>
+              ) : (
+                list.map((app, index) => (
+                  <tr key={app.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="px-3 py-2 text-center text-xs text-gray-500 border-r border-gray-100">
+                      {((sentToBankMeta.currentPage || page) - 1) * (sentToBankMeta.perPage || list.length || 20) + index + 1}
+                    </td>
+                    <td className="px-3 py-2 text-center text-xs font-mono text-[#0891b2] border-r border-gray-100">{app.ackId}</td>
+                    <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.name}</td>
+                    <td className="px-3 py-2 text-center text-xs font-mono border-r border-gray-100">{app.aadhaar}</td>
+                    <td className="px-3 py-2 text-center text-xs font-mono border-r border-gray-100">{app.mobile}</td>
+                    <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.bank_name || app.fullForm?.bankName || '-'}</td>
+                    <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.branch_name || app.fullForm?.branchName || '-'}</td>
+                    <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.account_number || app.fullForm?.accountNumber || '-'}</td>
+                    <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.ifsc || app.fullForm?.ifscCode || '-'}</td>
+                    <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{toYesNo(app.present_in_kbn ?? app.present_in_kb_n)}</td>
+                    <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{toYesNo(app.applied_yuvasathi ?? app.applied_for_yuvasathi)}</td>
+                    <td className="px-3 py-2 text-center">
+                      <ActionBtn onClick={() => navigate(`/portal/ada/registration/${app.id}/view`)} title="View Application">
+                        <EyeIcon />
+                      </ActionBtn>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {list.length > 0 && (
+          <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
+            <span>
+              Showing <strong>{Math.min(((sentToBankMeta.currentPage || page) - 1) * (sentToBankMeta.perPage || list.length || 20) + 1, sentToBankMeta.totalCount || list.length)}</strong> to{' '}
+              <strong>{Math.min((sentToBankMeta.currentPage || page) * (sentToBankMeta.perPage || list.length || 20), sentToBankMeta.totalCount || list.length)}</strong> of{' '}
+              <strong>{sentToBankMeta.totalCount || list.length}</strong> records
+            </span>
+            <div className="flex items-center gap-1">
+              <button type="button" onClick={() => goPage(1)} disabled={(sentToBankMeta.currentPage || page) === 1} className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100">
+                First
+              </button>
+              {visiblePages().map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => goPage(item)}
+                  className={`px-2.5 py-1 text-xs border rounded transition-colors ${
+                    item === (sentToBankMeta.currentPage || page)
+                      ? 'bg-[#3eb0c9] text-white border-[#3eb0c9]'
+                      : 'border-gray-300 hover:bg-gray-100'
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
+              {totalPages > 3 && (sentToBankMeta.currentPage || page) < totalPages && (
+                <>
+                  <span className="px-1 text-gray-400">...</span>
+                  <button type="button" onClick={() => goPage(totalPages)} className="px-2.5 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100">
+                    {totalPages}
+                  </button>
+                </>
+              )}
+              <button type="button" onClick={() => goPage(page + 1)} disabled={(sentToBankMeta.currentPage || page) === totalPages} className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100">
+                Next
+              </button>
+              <button type="button" onClick={() => goPage(totalPages)} disabled={(sentToBankMeta.currentPage || page) === totalPages} className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100">
+                Last
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  );
 }
+
+function FilterInput({ label, value, onChange, narrow = false }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-xs text-gray-600">{label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={`border border-gray-300 rounded px-3 py-1.5 text-sm ${narrow ? 'w-40' : 'w-52'} focus:outline-none focus:border-[#3eb0c9]`}
+      />
+    </div>
+  );
+}
+
+function ActionBtn({ onClick, title, children }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white p-1.5 rounded transition-colors"
+    >
+      {children}
+    </button>
+  );
+}
+
+function toYesNo(value) {
+  if ([true, 'true', 1, '1'].includes(value)) return 'Yes';
+  if ([false, 'false', 0, '0'].includes(value)) return 'No';
+  return '-';
+}
+
+const EyeIcon = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+);

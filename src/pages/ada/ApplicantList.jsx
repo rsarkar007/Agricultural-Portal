@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useApplicants } from '../../context/ApplicantContext';
 import { useDataDirs } from '../../context/DataDirsContext';
+import { downloadADABulkApproveCsvTemplate } from '../../api/client';
 
 export default function ADAApplicantList() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function ADAApplicantList() {
   const [actionError, setActionError] = useState('');
   const [actingId, setActingId] = useState(null);
   const [page, setPage] = useState(1);
+  const [bulkCsvFile, setBulkCsvFile] = useState(null);
 
   useEffect(() => {
     if (isPending) {
@@ -119,6 +121,21 @@ export default function ADAApplicantList() {
     setPage(1);
   };
 
+  const handleTemplateDownload = async () => {
+    try {
+      setActionError('');
+      const { blob, filename } = await downloadADABulkApproveCsvTemplate();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setActionError(e.message || 'CSV template download failed');
+    }
+  };
+
   useEffect(() => {
     if (!isPagedRoute) return;
     if (page > totalPages) setPage(totalPages);
@@ -187,7 +204,64 @@ export default function ADAApplicantList() {
             </div>
           </div>
 
-              {actionError && (
+          {isPending && (
+            <div className="mb-6 border-t border-gray-300 pt-5">
+              <h3 className="text-[15px] font-medium text-gray-700 mb-4">
+                Bulk Approve
+              </h3>
+
+              <div className="flex flex-wrap gap-4 mb-5">
+                <button
+                  type="button"
+                  onClick={handleTemplateDownload}
+                  className="bg-[#3e7fbe] hover:bg-[#336ea6] text-white text-sm font-medium px-5 py-2 rounded transition-colors"
+                >
+                  Download CSV Format
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-gray-600">
+                  Upload CSV <span className="text-red-500">*</span>
+                </label>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex-1 min-w-[320px]">
+                    <label className="flex items-center gap-3 border border-gray-300 rounded px-4 py-2.5 bg-white shadow-sm">
+                      <span className="inline-flex items-center bg-white border border-gray-400 text-black text-sm px-3 py-1 leading-none rounded-sm">
+                        Choose File
+                      </span>
+                      <span className="text-sm text-gray-500 truncate">
+                        {bulkCsvFile?.name || 'No file chosen'}
+                      </span>
+                      <input
+                        type="file"
+                        accept=".csv"
+                        className="sr-only"
+                        onChange={(e) => setBulkCsvFile(e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="bg-[#3e7fbe] hover:bg-[#336ea6] text-white text-sm font-semibold px-8 py-3 rounded transition-colors"
+                  >
+                    UPLOAD CSV
+                  </button>
+
+                  <button
+                    type="button"
+                    className="bg-[#57bf58] hover:bg-[#43a944] text-white text-sm font-semibold px-8 py-3 rounded transition-colors"
+                  >
+                    Uploaded CSV List
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {actionError && (
             <div className="mb-3 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2 rounded">
               <span className="flex-1">{actionError}</span>
               <button

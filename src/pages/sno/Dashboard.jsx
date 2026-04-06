@@ -1,110 +1,167 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApplicants } from '../../context/ApplicantContext';
-
+import { useDataDirs } from '../../context/DataDirsContext';
 
 export default function SNODashboard() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { applicants, sendToBank, revertToADA, loadFarmers } = useApplicants();
-  const [actionError, setActionError] = useState('');
+  const { applicants, loadFarmers } = useApplicants();
+  const { gpName } = useDataDirs();
 
-  useEffect(() => { loadFarmers(); }, []);
+  useEffect(() => {
+    loadFarmers();
+  }, [loadFarmers]);
 
-  // SNO sees only approved applications (sent from ADA)
-  const list = applicants.filter((a) => a.status === 'approved' || a.status === 'sent_to_bank');
+  const [showWelcome] = useState(() => {
+    const flag = sessionStorage.getItem('km_just_logged_in');
+    if (flag) {
+      sessionStorage.removeItem('km_just_logged_in');
+      return true;
+    }
+    return false;
+  });
+
+  const visible = useMemo(
+    () => applicants.filter((applicant) => applicant.status !== 'deleted'),
+    [applicants]
+  );
+
+  const gpRows = useMemo(() => {
+    const groupedRows = {};
+
+    visible.forEach((applicant) => {
+      const gpId = applicant.fullForm?.gramPanchayat || '';
+      const key = gpId || '-';
+
+      if (!groupedRows[key]) {
+        groupedRows[key] = { total: 0, approved: 0, rejected: 0, pending: 0 };
+      }
+
+      groupedRows[key].total++;
+
+      if (
+        applicant.status === 'approved' ||
+        applicant.status === 'sent_to_bank' ||
+        applicant.status === 'processed'
+      ) {
+        groupedRows[key].approved++;
+      } else if (applicant.status === 'rejected') {
+        groupedRows[key].rejected++;
+      } else {
+        groupedRows[key].pending++;
+      }
+    });
+
+    return Object.entries(groupedRows).sort(([a], [b]) => {
+      const nameA = gpName(a) || a;
+      const nameB = gpName(b) || b;
+      return nameA.localeCompare(nameB);
+    });
+  }, [visible, gpName]);
+
+  const totals = gpRows.reduce(
+    (accumulator, [, value]) => ({
+      total: accumulator.total + value.total,
+      approved: accumulator.approved + value.approved,
+      rejected: accumulator.rejected + value.rejected,
+      pending: accumulator.pending + value.pending,
+    }),
+    { total: 0, approved: 0, rejected: 0, pending: 0 }
+  );
+
+  const downloadCSV = () => {
+    const header = 'Sl No,Gram Panchayat,Total Submitted,Approved,Rejected,Pending\n';
+    const rows = gpRows
+      .map(
+        ([gpId, value], index) =>
+          `${index + 1},"${gpName(gpId) || gpId}",${value.total},${value.approved},${value.rejected},${value.pending}`
+      )
+      .join('\n');
+    const total = `Total,,${totals.total},${totals.approved},${totals.rejected},${totals.pending}`;
+    const blob = new Blob([header + rows + '\n' + total], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'sno_dashboard_summary.csv';
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-8">
-        <h2 className="text-base font-bold text-gray-800 text-center tracking-widest mb-6">
-          SNO DASHBOARD
+    <main className="grow w-full px-0 py-0">
+      {showWelcome && (
+        <div className="w-full bg-[#d9edf7] border-b border-[#bcdff1] px-6 py-3 text-[#31708f] text-sm font-medium">
+          Signed in successfully.
+        </div>
+      )}
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <h2 className="text-sm font-bold text-gray-800 text-center tracking-widest mb-6 uppercase">
+          Dashboard Summary
         </h2>
-        <p className="text-center text-sm text-gray-500 mb-8">
-          Logged in as: <strong>{user?.email}</strong>
-        </p>
 
-        {actionError && (
-          <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2 rounded">
-            <span className="flex-1">{actionError}</span>
-            <button onClick={() => setActionError('')} className="text-red-400 hover:text-red-700 text-lg leading-none">&times;</button>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-4 mb-8 max-w-xs">
-          <div className="border-l-4 border-green-500 text-green-700 bg-white shadow-sm rounded p-4">
-            <div className="text-2xl font-bold">{list.filter(a => a.status === 'approved').length}</div>
-            <div className="text-xs text-gray-500 mt-1">Awaiting Action</div>
-          </div>
-          <div className="border-l-4 border-blue-500 text-blue-700 bg-white shadow-sm rounded p-4">
-            <div className="text-2xl font-bold">{list.filter(a => a.status === 'sent_to_bank').length}</div>
-            <div className="text-xs text-gray-500 mt-1">Sent to Bank</div>
+        <div className="flex items-center justify-between mb-3">
+          <button
+            onClick={downloadCSV}
+            className="bg-[#4caf50] hover:bg-[#388e3c] text-white text-xs font-semibold px-4 py-2 rounded transition-colors"
+          >
+            Download CSV
+          </button>
+          <div className="text-sm text-gray-700 font-medium flex items-center gap-2">
+            Quick Registration Application Count :
+            <span className="inline-flex items-center justify-center bg-[#555] text-white text-xs font-bold rounded-full h-7 px-3 min-w-7">
+              {visible.length}
+            </span>
           </div>
         </div>
 
-        <div className="overflow-x-auto border border-gray-200 rounded">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto border border-gray-200">
+          <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="bg-gray-200 text-gray-700 text-xs uppercase tracking-wide">
-                <th className="px-3 py-2.5 text-center w-10">#</th>
-                <th className="px-3 py-2.5 text-center">Ack ID</th>
-                <th className="px-3 py-2.5 text-center">Applicant Name</th>
-                <th className="px-3 py-2.5 text-center">Aadhaar</th>
-                <th className="px-3 py-2.5 text-center">Mobile</th>
-                <th className="px-3 py-2.5 text-center">Status</th>
-                <th className="px-3 py-2.5 text-center">Actions</th>
+              <tr className="bg-gray-100 text-gray-700 text-xs font-semibold border-b border-gray-300">
+                <th className="px-4 py-2.5 text-center border-r border-gray-200 w-16">Sl No</th>
+                <th className="px-4 py-2.5 text-center border-r border-gray-200">Gram Panchayat</th>
+                <th className="px-4 py-2.5 text-center border-r border-gray-200">Total Submitted Application</th>
+                <th className="px-4 py-2.5 text-center border-r border-gray-200">Approved Application</th>
+                <th className="px-4 py-2.5 text-center border-r border-gray-200">Rejected Application</th>
+                <th className="px-4 py-2.5 text-center">Pending Application</th>
               </tr>
             </thead>
             <tbody>
-              {list.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-400">No approved applications to review.</td></tr>
-              ) : list.map((row, idx) => (
-                <tr key={row.id} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="px-3 py-2 text-center text-gray-500 text-xs">{idx + 1}</td>
-                  <td className="px-3 py-2 text-center font-mono text-xs text-[#0891b2]">{row.ackId}</td>
-                  <td className="px-3 py-2 text-center text-gray-700">{row.name}</td>
-                  <td className="px-3 py-2 text-center font-mono text-xs">{row.aadhaar}</td>
-                  <td className="px-3 py-2 text-center font-mono text-xs">{row.mobile}</td>
-                  <td className="px-3 py-2 text-center">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${
-                      row.status === 'approved' ? 'bg-green-100 text-green-800'
-                      : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {row.status.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <button onClick={() => navigate(`/portal/sno/registration/${row.id}/view`)} title="View Full Application"
-                        className="bg-[#0891b2] hover:bg-[#0e7490] text-white p-1.5 rounded">
-                        <EyeIcon />
-                      </button>
-                      {row.status === 'approved' && (
-                        <>
-                          <button onClick={async () => { try { await sendToBank(row.id); } catch(e) { setActionError(e.message || 'Failed to send to bank'); } }} title="Send to Bank"
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-2.5 py-1.5 rounded whitespace-nowrap">
-                            → Bank
-                          </button>
-                          <button onClick={async () => { try { await revertToADA(row.id); } catch(e) { setActionError(e.message || 'Failed to revert to ADA'); } }} title="Revert to ADA"
-                            className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-2.5 py-1.5 rounded whitespace-nowrap">
-                            ↩ ADA
-                          </button>
-                        </>
-                      )}
-                    </div>
+              {gpRows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-10 text-gray-400 text-sm">
+                    No applications found.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                gpRows.map(([gpId, value], index) => (
+                  <tr
+                    key={gpId}
+                    className={`border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}
+                  >
+                    <td className="px-4 py-2 text-center text-gray-500 border-r border-gray-100">{index + 1}</td>
+                    <td className="px-4 py-2 text-center border-r border-gray-100">
+                      {gpName(gpId) || gpId}
+                    </td>
+                    <td className="px-4 py-2 text-center text-gray-600 border-r border-gray-100">{value.total}</td>
+                    <td className="px-4 py-2 text-center text-gray-600 border-r border-gray-100">{value.approved}</td>
+                    <td className="px-4 py-2 text-center text-gray-600 border-r border-gray-100">{value.rejected}</td>
+                    <td className="px-4 py-2 text-center text-gray-600">{value.pending}</td>
+                  </tr>
+                ))
+              )}
+              {gpRows.length > 0 && (
+                <tr className="bg-gray-100 font-semibold text-gray-700 border-t-2 border-gray-300">
+                  <td className="px-4 py-2 text-center border-r border-gray-200" colSpan={2}>Total</td>
+                  <td className="px-4 py-2 text-center border-r border-gray-200">{totals.total}</td>
+                  <td className="px-4 py-2 text-center border-r border-gray-200">{totals.approved}</td>
+                  <td className="px-4 py-2 text-center border-r border-gray-200">{totals.rejected}</td>
+                  <td className="px-4 py-2 text-center">{totals.pending}</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+      </div>
     </main>
   );
 }
-
-const EyeIcon = () => (
-  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-  </svg>
-);

@@ -29,6 +29,8 @@ import ADADeletedApplicantList from './pages/ada/DeletedList';
 
 import ADAMembersList from './pages/ada/MemberList';
 import NewMember from './pages/ada/NewMember';
+import SNOPaymentFileList from './pages/sno/PaymentFileList';
+import SNODDAApprovedList from './pages/sno/ApprovedList';
 
 const GramdootDashboard = React.lazy(() => import('./pages/gramdoot/Dashboard'));
 const RegistrationForm = React.lazy(() => import('./pages/gramdoot/RegistrationForm'));
@@ -121,6 +123,18 @@ export default function App() {
               {/*  SNO  */}
               <Route path="/portal/sno/dashboard"
                 element={<AppLayout wrapMain={false}><PortalRoute role="sno"><SNODashboard /></PortalRoute></AppLayout>} />
+              <Route path="/portal/sno/approved"
+                element={<AppLayout wrapMain={false}><PortalRoute role="sno"><SNODDAApprovedList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/sno/send_to_bank"
+                element={<AppLayout wrapMain={false}><PortalRoute role="sno"><ADASentToBankApplicantList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/sno/rejected_list"
+                element={<AppLayout wrapMain={false}><PortalRoute role="sno"><ADARejectedApplicantList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/sno/members"
+                element={<AppLayout wrapMain={false}><PortalRoute role="sno"><ADAMembersList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/sno/members/new"
+                element={<AppLayout wrapMain={false}><PortalRoute role="sno"><NewMember /></PortalRoute></AppLayout>} />
+              <Route path="/portal/sno/payment_file_list"
+                element={<AppLayout wrapMain={false}><PortalRoute role="sno"><SNOPaymentFileList /></PortalRoute></AppLayout>} />
               <Route path="/portal/sno/registration/:id/view"
                 element={<AppLayout wrapMain={false}><PortalRoute role="sno"><ViewApplication /></PortalRoute></AppLayout>} />
 

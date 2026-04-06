@@ -1,1023 +1,7 @@
-// import React, { useState, useRef, useEffect } from 'react';
-// import { Link, useLocation } from 'react-router-dom';
-// import { Menu, X } from 'lucide-react';
-// import { useAuth } from '../context/AuthContext';
-
-// const ROLE_HOME = {
-//   gramdoot: '/portal/dashboard',
-//   ada: '/portal/ada/dashboard',
-//   sno: '/portal/sno/dashboard',
-//   bank: '/portal/bank/dashboard',
-// };
-
-// const ROLE_LABELS = {
-//   gramdoot: 'Gramdoot',
-//   ada: 'ADA',
-//   sno: 'SNO',
-//   bank: 'Bank',
-// };
-
-// export default function Header() {
-//   const { user } = useAuth();
-//   const location = useLocation();
-
-//   const [isMenuOpen, setIsMenuOpen] = useState(false);
-//   const [quickRegOpen, setQuickRegOpen] = useState(false);
-//   const [adaMenuOpen, setAdaMenuOpen] = useState(false);
-
-//   const navRef = useRef(null);
-
-//   const dashboardPath = ROLE_HOME[user?.role] || '/';
-//   const isActive = (path) => location.pathname === path;
-
-//   // Close dropdowns when clicking outside
-//   useEffect(() => {
-//     const handler = (e) => {
-//       if (navRef.current && !navRef.current.contains(e.target)) {
-//         setQuickRegOpen(false);
-//         setAdaMenuOpen(false);
-//       }
-//     };
-//     document.addEventListener('mousedown', handler);
-//     return () => document.removeEventListener('mousedown', handler);
-//   }, []);
-
-//   // Auto close mobile menu on route change
-//   useEffect(() => {
-//     setIsMenuOpen(false);
-//   }, [location.pathname]);
-
-//   // ==============================
-//   // 🔵 PORTAL HEADER (Logged In)
-//   // ==============================
-//   if (user) {
-//     return (
-//       <>
-//         <header className="bg-white border-b border-gray-200 shadow-sm">
-//           <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-[72px]">
-
-//             {/* Logo */}
-//             <Link to={dashboardPath}>
-//               <img
-//                 src="/image/logo_bsb.png"
-//                 alt="WB Govt"
-//                 className="h-14 w-auto object-contain"
-//               />
-//             </Link>
-
-//             {/* Desktop Nav */}
-//             <nav className="hidden sm:flex items-center gap-6 text-sm font-medium text-gray-700">
-
-//               <Link
-//                 to={dashboardPath}
-//                 className={`hover:text-[#0891b2] transition ${isActive(dashboardPath)
-//                   ? 'text-[#0891b2] font-semibold'
-//                   : ''
-//                   }`}
-//               >
-//                 Dashboard
-//               </Link>
-
-//               {/* Gramdoot */}
-//               {user.role === 'gramdoot' && (
-//                 <div className="relative" ref={navRef}>
-//                   <button
-//                     onClick={() => setQuickRegOpen(!quickRegOpen)}
-//                     className={`flex items-center gap-1 hover:text-[#0891b2] ${location.pathname.startsWith('/portal/quick-registration')
-//                       ? 'text-[#0891b2] font-semibold'
-//                       : ''
-//                       }`}
-//                   >
-//                     Quick Registration
-//                     <svg
-//                       className="w-3.5 h-3.5"
-//                       fill="none"
-//                       stroke="currentColor"
-//                       strokeWidth="2"
-//                       viewBox="0 0 24 24"
-//                     >
-//                       <path
-//                         strokeLinecap="round"
-//                         strokeLinejoin="round"
-//                         d="M19 9l-7 7-7-7"
-//                       />
-//                     </svg>
-//                   </button>
-
-//                   {quickRegOpen && (
-//                     <div className="absolute left-0 mt-2 w-52 bg-white border rounded shadow-lg z-50">
-//                       <Link
-//                         to="/portal/quick-registration/new"
-//                         className="block px-4 py-2 hover:bg-gray-50"
-//                       >
-//                         Registration Form
-//                       </Link>
-//                       <Link
-//                         to="/portal/quick-registration/list"
-//                         className="block px-4 py-2 border-t hover:bg-gray-50"
-//                       >
-//                         Registered Applicant List
-//                       </Link>
-//                     </div>
-//                   )}
-//                 </div>
-//               )}
-
-//               {/* ADA */}
-//               {user.role === 'ada' && (
-//                 <div className="relative" ref={navRef}>
-//                   <button
-//                     onClick={() => setAdaMenuOpen(!adaMenuOpen)}
-//                     className={`flex items-center gap-1 hover:text-[#0891b2] ${location.pathname.startsWith('/portal/ada')
-//                       ? 'text-[#0891b2] font-semibold'
-//                       : ''
-//                       }`}
-//                   >
-//                     Registered Applicant List
-//                     <svg
-//                       className="w-3.5 h-3.5"
-//                       fill="none"
-//                       stroke="currentColor"
-//                       strokeWidth="2"
-//                       viewBox="0 0 24 24"
-//                     >
-//                       <path
-//                         strokeLinecap="round"
-//                         strokeLinejoin="round"
-//                         d="M19 9l-7 7-7-7"
-//                       />
-//                     </svg>
-//                   </button>
-
-//                   {adaMenuOpen && (
-//                     <div className="absolute left-0 mt-2 w-52 bg-white border rounded shadow-lg z-50">
-//                       <Link
-//                         to="/portal/ada/applications"
-//                         className="block px-4 py-2 hover:bg-gray-50"
-//                       >
-//                         Registered Applicant List
-//                       </Link>
-//                       <Link
-//                         to="/portal/ada/pending"
-//                         className="block px-4 py-2 border-t hover:bg-gray-50"
-//                       >
-//                         Pending List
-//                       </Link>
-//                       <Link
-//                         to="/portal/ada/pending"
-//                         className="block px-4 py-2 border-t hover:bg-gray-50"
-//                       >
-//                         Applicant List
-//                       </Link>
-//                       <Link
-//                         to="/portal/ada/pending"
-//                         className="block px-4 py-2 border-t hover:bg-gray-50"
-//                       >
-//                         Approved List
-//                       </Link>
-//                       <Link
-//                         to="/portal/ada/pending"
-//                         className="block px-4 py-2 border-t hover:bg-gray-50"
-//                       >
-//                         Send to bank List
-//                       </Link>
-//                       <Link
-//                         to="/portal/ada/pending"
-//                         className="block px-4 py-2 border-t hover:bg-gray-50"
-//                       >
-//                         Rejected List
-//                       </Link>
-//                       <Link
-//                         to="/portal/ada/pending"
-//                         className="block px-4 py-2 border-t hover:bg-gray-50"
-//                       >
-//                         Reverted List
-//                       </Link>
-//                       <Link
-//                         to="/portal/ada/pending"
-//                         className="block px-4 py-2 border-t hover:bg-gray-50"
-//                       >
-//                         Deleted List
-//                       </Link>
-//                     </div>
-//                   )}
-//                 </div>
-//               )}
-
-
-
-//               {/* SNO */}
-//               {user.role === 'sno' && (
-//                 <Link
-//                   to="/portal/sno/dashboard"
-//                   className={`hover:text-[#0891b2] ${location.pathname.startsWith('/portal/sno')
-//                     ? 'text-[#0891b2] font-semibold'
-//                     : ''
-//                     }`}
-//                 >
-//                   Applications
-//                 </Link>
-//               )}
-
-//               {/* Bank */}
-//               {user.role === 'bank' && (
-//                 <Link
-//                   to="/portal/bank/dashboard"
-//                   className={`hover:text-[#0891b2] ${location.pathname.startsWith('/portal/bank')
-//                     ? 'text-[#0891b2] font-semibold'
-//                     : ''
-//                     }`}
-//                 >
-//                   DBT Applications
-//                 </Link>
-//               )}
-
-//               <a href="#" className="hover:text-[#0891b2]">
-//                 Download App
-//               </a>
-//             </nav>
-
-//             {/* Mobile Hamburger */}
-//             <div className="sm:hidden">
-//               <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
-//                 {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-//               </button>
-//             </div>
-//           </div>
-//         </header>
-
-//         {/* Mobile Role Menu */}
-//         {isMenuOpen && (
-//           <div className="sm:hidden bg-white border-t px-4 py-4 flex flex-col gap-3 text-sm font-medium text-gray-700 shadow-md">
-
-//             <Link to={dashboardPath}>Dashboard</Link>
-
-//             {user.role === 'gramdoot' && (
-//               <>
-//                 <Link to="/portal/quick-registration/new">
-//                   Registration Form
-//                 </Link>
-//                 <Link to="/portal/quick-registration/list">
-//                   Registered Applicant List
-//                 </Link>
-//               </>
-//             )}
-
-//             {user.role === 'ada' && (
-//               <>
-//                 <Link to="/portal/ada/applications">
-//                   Registered Applicant List
-//                 </Link>
-//                 <Link to="/portal/ada/pending">
-//                   Pending List
-//                 </Link>
-//               </>
-//             )}
-
-//             {user.role === 'sno' && (
-//               <Link to="/portal/sno/dashboard">Applications</Link>
-//             )}
-
-//             {user.role === 'bank' && (
-//               <Link to="/portal/bank/dashboard">
-//                 DBT Applications
-//               </Link>
-//             )}
-
-//             <a href="#">Download App</a>
-//           </div>
-//         )}
-
-//         {/* Blue Announcement Bar */}
-//         <div className="bg-[#1565c0] h-11 flex items-center justify-center">
-//           <p className="text-white font-semibold text-sm tracking-wide">
-//             Welcome to {ROLE_LABELS[user.role]} Portal Agricultural Labour Scheme
-//           </p>
-//         </div>
-//       </>
-//     );
-//   }
-
-//   // ==============================
-//   // 🟢 PUBLIC HEADER
-//   // ==============================
-//   return (
-//     <>
-//       <header className="bg-white border-b shadow-sm">
-//         <div className="max-w-[1280px] mx-auto flex items-center justify-between px-4 py-3">
-//           <Link to="/">
-//             <img
-//               src="/image/logo_bsb.png"
-//               alt="Govt Logo"
-//               className="h-16 w-auto"
-//             />
-//           </Link>
-
-//           <div className="hidden sm:flex gap-2">
-//             <Link
-//               to="/status"
-//               className="bg-[#00ACED] text-white px-4 py-2 rounded"
-//             >
-//               Check Application
-//             </Link>
-//             <button className="bg-[#00ACED] text-white px-4 py-2 rounded">
-//               New Application Form
-//             </button>
-//             <button className="bg-[#00ACED] text-white px-4 py-2 rounded">
-//               Faq
-//             </button>
-//           </div>
-
-//           <div className="sm:hidden">
-//             <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
-//               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-//             </button>
-//           </div>
-//         </div>
-
-//         {isMenuOpen && (
-//           <div className="sm:hidden px-4 pb-4 flex flex-col gap-2 bg-white border-t">
-//             <Link
-//               to="/status"
-//               className="bg-[#00ACED] text-center text-white px-4 py-2 rounded"
-//             >
-//               Check Application
-//             </Link>
-//             <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">
-//               New Application Form
-//             </button>
-//             <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">
-//               Faq
-//             </button>
-//           </div>
-//         )}
-//       </header>
-
-//       <div className="bg-[#0648b3] text-white py-2 text-center font-medium">
-//         Welcome to Agricultural Labour Portal
-//       </div>
-//     </>
-//   );
-// }
-
-
-
-// import React, { useState, useRef, useEffect } from 'react';
-// import { Link, useLocation } from 'react-router-dom';
-// import { Menu, X } from 'lucide-react';
-// import { useAuth } from '../context/AuthContext';
-
-// const ROLE_HOME = {
-//   gramdoot: '/portal/dashboard',
-//   ada: '/portal/ada/dashboard',
-//   sno: '/portal/sno/dashboard',
-//   bank: '/portal/bank/dashboard',
-// };
-
-// const ROLE_LABELS = {
-//   gramdoot: 'Gramdoot',
-//   ada: 'ADA',
-//   sno: 'SNO',
-//   bank: 'Bank',
-// };
-
-// export default function Header() {
-//   const { user } = useAuth();
-//   const location = useLocation();
-
-//   const [isMenuOpen, setIsMenuOpen] = useState(false);
-//   const [quickRegOpen, setQuickRegOpen] = useState(false);
-//   const [adaMenuOpen, setAdaMenuOpen] = useState(false);
-//   const [misMenuOpen, setMisMenuOpen] = useState(false);
-//   const [memberMenuOpen, setMemberMenuOpen] = useState(false);
-
-//   // ✅ FIX: Separate refs
-//   const quickRef = useRef(null);
-//   const adaRef = useRef(null);
-//   const misRef = useRef(null);
-//   const memberRef = useRef(null);
-
-//   const dashboardPath = ROLE_HOME[user?.role] || '/';
-//   const isActive = (path) => location.pathname === path;
-
-//   // ✅ FIX: Proper outside click handling
-//   useEffect(() => {
-//     const handler = (e) => {
-//       if (
-//         !quickRef.current?.contains(e.target) &&
-//         !adaRef.current?.contains(e.target) &&
-//         !misRef.current?.contains(e.target) &&
-//         !memberRef.current?.contains(e.target)
-//       ) {
-//         setQuickRegOpen(false);
-//         setAdaMenuOpen(false);
-//         setMisMenuOpen(false);
-//         setMemberMenuOpen(false);
-//       }
-//     };
-
-//     document.addEventListener('mousedown', handler);
-//     return () => document.removeEventListener('mousedown', handler);
-//   }, []);
-
-//   useEffect(() => {
-//     setIsMenuOpen(false);
-//   }, [location.pathname]);
-
-//   if (user) {
-//     return (
-//       <>
-//         <header className="bg-white border-b border-gray-200 shadow-sm">
-//           <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-[72px]">
-
-//             <Link to={dashboardPath}>
-//               <img src="/image/logo_bsb.png" alt="WB Govt" className="h-14" />
-//             </Link>
-
-//             <nav className="hidden sm:flex items-center gap-6 text-sm font-medium text-gray-700">
-
-//               <Link
-//                 to={dashboardPath}
-//                 className={`hover:text-[#0891b2] ${isActive(dashboardPath) ? 'text-[#0891b2] font-semibold' : ''}`}
-//               >
-//                 Dashboard
-//               </Link>
-
-//               {/* Gramdoot */}
-//               {user.role === 'gramdoot' && (
-//                 <div className="relative" ref={quickRef}>
-//                   <button onClick={() => setQuickRegOpen(!quickRegOpen)} className="flex gap-1">
-//                     Quick Registration
-//                   </button>
-
-//                   {quickRegOpen && (
-//                     <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg">
-//                       <Link to="/portal/quick-registration/new" className="block px-4 py-2">Registration Form</Link>
-//                       <Link to="/portal/quick-registration/list" className="block px-4 py-2">Registered Applicant List</Link>
-//                     </div>
-//                   )}
-//                 </div>
-//               )}
-
-//               {/* ADA */}
-//               {user.role === 'ada' && (
-//                 <div className="relative" ref={adaRef}>
-//                   <button
-//                     onClick={() => setAdaMenuOpen(!adaMenuOpen)}
-//                     className="flex items-center gap-1 hover:text-[#0891b2]"
-//                   >
-//                     Applicant List
-//                     <svg
-//                       className="w-3.5 h-3.5 ml-1"
-//                       fill="none"
-//                       stroke="currentColor"
-//                       strokeWidth="2"
-//                       viewBox="0 0 24 24"
-//                     >
-//                       <path
-//                         strokeLinecap="round"
-//                         strokeLinejoin="round"
-//                         d="M19 9l-7 7-7-7"
-//                       />
-//                     </svg>
-//                   </button>
-
-//                   {adaMenuOpen && (
-//                     <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg">
-//                       <Link to="/portal/ada/applications" className="block px-4 py-2">Applicant List</Link>
-//                       <Link to="/portal/ada/pending" className="block px-4 py-2">Pending List</Link>
-//                       <Link to="/portal/ada/approved" className="block px-4 py-2">Approved List</Link>
-//                       <Link to="/portal/ada/send_to_bank" className="block px-4 py-2">Send to Bank List</Link>
-//                     </div>
-//                   )}
-//                 </div>
-//               )}
-
-//               {/* MIS */}
-//               <div className="relative" ref={misRef}>
-//                 <button
-//                   onClick={() => setMisMenuOpen(!misMenuOpen)}
-//                   className="flex items-center gap-1 hover:text-[#0891b2]"
-//                 >
-//                   MIS
-//                   <svg
-//                     className="w-3.5 h-3.5 ml-1"
-//                     fill="none"
-//                     stroke="currentColor"
-//                     strokeWidth="2"
-//                     viewBox="0 0 24 24"
-//                   >
-//                     <path
-//                       strokeLinecap="round"
-//                       strokeLinejoin="round"
-//                       d="M19 9l-7 7-7-7"
-//                     />
-//                   </svg>
-//                 </button>
-
-//                 {misMenuOpen && (
-//                   <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg">
-//                     <Link to="/portal/mis/demo1" className="block px-4 py-2">Download Submitted List</Link>
-//                     <Link to="/portal/mis/demo2" className="block px-4 py-2">Download Approved List</Link>
-//                   </div>
-//                 )}
-//               </div>
-
-//               {/* MEMBER */}
-//               <div className="relative" ref={memberRef}>
-//                 <button
-//                   onClick={() => setMemberMenuOpen(!memberMenuOpen)}
-//                   className="flex items-center gap-1 hover:text-[#0891b2]"
-//                 >
-//                   Member
-//                   <svg
-//                     className="w-3.5 h-3.5 ml-1"
-//                     fill="none"
-//                     stroke="currentColor"
-//                     strokeWidth="2"
-//                     viewBox="0 0 24 24"
-//                   >
-//                     <path
-//                       strokeLinecap="round"
-//                       strokeLinejoin="round"
-//                       d="M19 9l-7 7-7-7"
-//                     />
-//                   </svg>
-//                 </button>
-
-//                 {memberMenuOpen && (
-//                   <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg">
-//                     <Link to="/portal/member/demo1" className="block px-4 py-2">New Member</Link>
-//                     <Link to="/portal/member/demo2" className="block px-4 py-2">Member List</Link>
-//                   </div>
-//                 )}
-//               </div>
-
-//             </nav>
-
-//             <div className="sm:hidden">
-//               <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
-//                 {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-//               </button>
-//             </div>
-//           </div>
-//         </header>
-//         {/* Mobile Menu */}
-//         {isMenuOpen && (
-//           <div className="sm:hidden bg-white border-b border-gray-200 shadow-sm px-4 py-4 space-y-3 text-sm font-medium text-gray-700">
-
-//             <Link
-//               to={dashboardPath}
-//               className={`block ${isActive(dashboardPath) ? 'text-[#0891b2] font-semibold' : ''}`}
-//             >
-//               Dashboard
-//             </Link>
-
-//             {/* Gramdoot */}
-//             {user.role === 'gramdoot' && (
-//               <>
-//                 <div>
-//                   <p className="font-semibold">Quick Registration</p>
-//                   <Link to="/portal/quick-registration/new" className="block pl-3 py-1">
-//                     Registration Form
-//                   </Link>
-//                   <Link to="/portal/quick-registration/list" className="block pl-3 py-1">
-//                     Registered Applicant List
-//                   </Link>
-//                 </div>
-//               </>
-//             )}
-
-//             {/* ADA */}
-//             {user.role === 'ada' && (
-//               <div>
-//                 <p className="font-semibold">Applicant List</p>
-//                 <Link to="/portal/ada/applications" className="block pl-3 py-1">
-//                   Applicant List
-//                 </Link>
-//                 <Link to="/portal/ada/pending" className="block pl-3 py-1">
-//                   Pending List
-//                 </Link>
-//                 <Link to="/portal/ada/approved" className="block pl-3 py-1">
-//                   Approved List
-//                 </Link>
-//                 <Link to="/portal/ada/send_to_bank" className="block pl-3 py-1">
-//                   Send to Bank List
-//                 </Link>
-//               </div>
-//             )}
-//             {/* MIS */}
-
-
-
-
-//             {/* MEMBER */}
-//             <div>
-//               <p className="font-semibold">Member</p>
-//               <Link to="/portal/member/demo1" className="block pl-3 py-1">
-//                 New Member
-//               </Link>
-//               <Link to="/portal/member/demo2" className="block pl-3 py-1">
-//                 Member List
-//               </Link>
-//             </div>
-//           </div>
-//         )}
-
-//         <div className="bg-[#1565c0] h-11 flex items-center justify-center text-white">
-//           Welcome to {ROLE_LABELS[user.role]} Portal Agricultural Labour Scheme
-//         </div>
-//       </>
-//     );
-//   }
-
-//   return (
-//     <>
-//       <header className="bg-white border-b shadow-sm">
-//         <div className="max-w-[1280px] mx-auto flex items-center justify-between px-4 py-3">
-//           <Link to="/">
-//             <img
-//               src="/image/logo_bsb.png"
-//               alt="Govt Logo"
-//               className="h-16 w-auto"
-//             />
-//           </Link>
-
-//           <div className="hidden sm:flex gap-2">
-//             <Link
-//               to="/status"
-//               className="bg-[#00ACED] text-white px-4 py-2 rounded"
-//             >
-//               Check Application
-//             </Link>
-//             <button className="bg-[#00ACED] text-white px-4 py-2 rounded">
-//               New Application Form
-//             </button>
-//             <button className="bg-[#00ACED] text-white px-4 py-2 rounded">
-//               Faq
-//             </button>
-//           </div>
-
-//           <div className="sm:hidden">
-//             <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
-//               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-//             </button>
-//           </div>
-//         </div>
-
-//         {isMenuOpen && (
-//           <div className="sm:hidden px-4 pb-4 flex flex-col gap-2 bg-white border-t">
-//             <Link
-//               to="/status"
-//               className="bg-[#00ACED] text-center text-white px-4 py-2 rounded"
-//             >
-//               Check Application
-//             </Link>
-//             <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">
-//               New Application Form
-//             </button>
-//             <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">
-//               Faq
-//             </button>
-//           </div>
-//         )}
-//       </header>
-
-//       <div className="bg-[#0648b3] text-white py-2 text-center font-medium">
-//         Welcome to Agricultural Labour Portal
-//       </div>
-//     </>
-//   );
-// }
-
-// import React, { useState, useRef, useEffect } from 'react';
-// import { Link, useLocation } from 'react-router-dom';
-// import { Menu, X } from 'lucide-react';
-// import { useAuth } from '../context/AuthContext';
-
-// const ROLE_HOME = {
-//   gramdoot: '/portal/dashboard',
-//   ada: '/portal/ada/dashboard',
-//   sno: '/portal/sno/dashboard',
-//   bank: '/portal/bank/dashboard',
-// };
-
-// const ROLE_LABELS = {
-//   gramdoot: 'Gramdoot',
-//   ada: 'ADA',
-//   sno: 'SNO',
-//   bank: 'Bank',
-// };
-
-// export default function Header() {
-//   const { user } = useAuth();
-//   const location = useLocation();
-
-//   const [isMenuOpen, setIsMenuOpen] = useState(false);
-//   const [quickRegOpen, setQuickRegOpen] = useState(false);
-//   const [adaMenuOpen, setAdaMenuOpen] = useState(false);
-//   const [misMenuOpen, setMisMenuOpen] = useState(false);
-//   const [memberMenuOpen, setMemberMenuOpen] = useState(false);
-
-//   // ✅ Separate refs for outside click handling
-//   const quickRef = useRef(null);
-//   const adaRef = useRef(null);
-//   const misRef = useRef(null);
-//   const memberRef = useRef(null);
-
-//   const dashboardPath = ROLE_HOME[user?.role] || '/';
-//   const isActive = (path) => location.pathname === path;
-
-//   // ✅ Close dropdowns when clicking outside
-//   useEffect(() => {
-//     const handler = (e) => {
-//       if (
-//         !quickRef.current?.contains(e.target) &&
-//         !adaRef.current?.contains(e.target) &&
-//         !misRef.current?.contains(e.target) &&
-//         !memberRef.current?.contains(e.target)
-//       ) {
-//         setQuickRegOpen(false);
-//         setAdaMenuOpen(false);
-//         setMisMenuOpen(false);
-//         setMemberMenuOpen(false);
-//       }
-//     };
-//     document.addEventListener('mousedown', handler);
-//     return () => document.removeEventListener('mousedown', handler);
-//   }, []);
-
-//   useEffect(() => {
-//     setIsMenuOpen(false);
-//   }, [location.pathname]);
-
-//   if (user) {
-//     return (
-//       <>
-//         <header className="bg-white border-b border-gray-200 shadow-sm">
-//           <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-[72px]">
-//             <Link to={dashboardPath}>
-//               <img src="/image/logo_bsb.png" alt="WB Govt" className="h-14" />
-//             </Link>
-
-//             <nav className="hidden sm:flex items-center gap-6 text-sm font-medium text-gray-700">
-//               <Link
-//                 to={dashboardPath}
-//                 className={`hover:text-[#0891b2] ${isActive(dashboardPath) ? 'text-[#0891b2] font-semibold' : ''}`}
-//               >
-//                 Dashboard
-//               </Link>
-
-//               {/* Gramdoot Quick Registration */}
-//               {user.role === 'gramdoot' && (
-//                 <div className="relative" ref={quickRef}>
-//                   <button onClick={() => setQuickRegOpen(!quickRegOpen)} className="flex gap-1">
-//                     Quick Registration
-//                     <svg
-//                       className="w-3.5 h-3.5 ml-1"
-//                       fill="none"
-//                       stroke="currentColor"
-//                       strokeWidth="2"
-//                       viewBox="0 0 24 24"
-//                     >
-//                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-//                     </svg>
-//                   </button>
-//                   {quickRegOpen && (
-//                     <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg">
-//                       <Link to="/portal/quick-registration/new" className="block px-4 py-2">
-//                         Registration Form
-//                       </Link>
-//                       <Link to="/portal/quick-registration/list" className="block px-4 py-2">
-//                         Registered Applicant List
-//                       </Link>
-//                     </div>
-//                   )}
-//                 </div>
-//               )}
-
-//               {/* ADA Applicant List */}
-//               {user.role === 'ada' && (
-//                 <div className="relative" ref={adaRef}>
-//                   <button
-//                     onClick={() => setAdaMenuOpen(!adaMenuOpen)}
-//                     className="flex items-center gap-1 hover:text-[#0891b2]"
-//                   >
-//                     Applicant List
-//                     <svg
-//                       className="w-3.5 h-3.5 ml-1"
-//                       fill="none"
-//                       stroke="currentColor"
-//                       strokeWidth="2"
-//                       viewBox="0 0 24 24"
-//                     >
-//                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-//                     </svg>
-//                   </button>
-//                   {adaMenuOpen && (
-//                     <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg">
-//                       <Link to="/portal/ada/applications" className="block px-4 py-2">
-//                         Applicant List
-//                       </Link>
-//                       <Link to="/portal/ada/pending" className="block px-4 py-2">
-//                         Pending List
-//                       </Link>
-//                       <Link to="/portal/ada/approved" className="block px-4 py-2">
-//                         Approved List
-//                       </Link>
-//                       <Link to="/portal/ada/send_to_bank" className="block px-4 py-2">
-//                         Send to Bank List
-//                       </Link>
-//                       <Link to="/portal/ada/rejected_list" className="block px-4 py-2">
-//                         Rejected List
-//                       </Link>
-//                       <Link to="/portal/ada/reverted_list" className="block px-4 py-2">
-//                         Reverted List
-//                       </Link>
-//                       <Link to="/portal/ada/deleted_list" className="block px-4 py-2">
-//                         Deleted List
-//                       </Link>
-//                     </div>
-//                   )}
-//                 </div>
-//               )}
-
-//               {/* MIS (ADA only) */}
-//               {user.role === 'ada' && (
-//                 <div className="relative" ref={misRef}>
-//                   <button
-//                     onClick={() => setMisMenuOpen(!misMenuOpen)}
-//                     className="flex items-center gap-1 hover:text-[#0891b2]"
-//                   >
-//                     MIS
-//                     <svg
-//                       className="w-3.5 h-3.5 ml-1"
-//                       fill="none"
-//                       stroke="currentColor"
-//                       strokeWidth="2"
-//                       viewBox="0 0 24 24"
-//                     >
-//                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-//                     </svg>
-//                   </button>
-//                   {misMenuOpen && (
-//                     <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg">
-//                       <Link to="/portal/mis/demo1" className="block px-4 py-2">
-//                         Download Submitted List
-//                       </Link>
-//                       <Link to="/portal/mis/demo2" className="block px-4 py-2">
-//                         Download Approved List
-//                       </Link>
-//                     </div>
-//                   )}
-//                 </div>
-//               )}
-
-//               {/* MEMBER (ADA only) */}
-//               {user.role === 'ada' && (
-//                 <div className="relative" ref={memberRef}>
-//                   <button
-//                     onClick={() => setMemberMenuOpen(!memberMenuOpen)}
-//                     className="flex items-center gap-1 hover:text-[#0891b2]"
-//                   >
-//                     Member
-//                     <svg
-//                       className="w-3.5 h-3.5 ml-1"
-//                       fill="none"
-//                       stroke="currentColor"
-//                       strokeWidth="2"
-//                       viewBox="0 0 24 24"
-//                     >
-//                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-//                     </svg>
-//                   </button>
-//                   {memberMenuOpen && (
-//                     <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg">
-//                       <Link to="/portal/member/demo1" className="block px-4 py-2">New Member</Link>
-//                       <Link to="/portal/member/demo2" className="block px-4 py-2">Member List</Link>
-//                     </div>
-//                   )}
-//                 </div>
-//               )}
-
-//             </nav>
-
-//             {/* Mobile Menu Toggle */}
-//             <div className="sm:hidden">
-//               <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
-//                 {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-//               </button>
-//             </div>
-//           </div>
-//         </header>
-
-//         {/* Mobile Menu */}
-//         {isMenuOpen && (
-//           <div className="sm:hidden bg-white border-b border-gray-200 shadow-sm px-4 py-4 space-y-3 text-sm font-medium text-gray-700">
-//             <Link
-//               to={dashboardPath}
-//               className={`block ${isActive(dashboardPath) ? 'text-[#0891b2] font-semibold' : ''}`}
-//             >
-//               Dashboard
-//             </Link>
-
-//             {/* Gramdoot Quick Registration */}
-//             {user.role === 'gramdoot' && (
-//               <div>
-//                 <p className="font-semibold">Quick Registration</p>
-//                 <Link to="/portal/quick-registration/new" className="block pl-3 py-1">
-//                   Registration Form
-//                 </Link>
-//                 <Link to="/portal/quick-registration/list" className="block pl-3 py-1">
-//                   Registered Applicant List
-//                 </Link>
-//               </div>
-//             )}
-
-//             {/* ADA Applicant List */}
-//             {user.role === 'ada' && (
-//               <div>
-//                 <p className="font-semibold">Applicant List</p>
-//                 <Link to="/portal/ada/applications" className="block pl-3 py-1">Applicant List</Link>
-//                 <Link to="/portal/ada/pending" className="block pl-3 py-1">Pending List</Link>
-//                 <Link to="/portal/ada/approved" className="block pl-3 py-1">Approved List</Link>
-//                 <Link to="/portal/ada/send_to_bank" className="block pl-3 py-1">Send to Bank List</Link>
-//                 <Link to="/portal/ada/rejected_list" className="block pl-3 py-1">Rejected List</Link>
-//                 <Link to="/portal/ada/reverted_list" className="block pl-3 py-1">Reverted List</Link>
-//                 <Link to="/portal/ada/deleted_list" className="block pl-3 py-1">Deleted List</Link>
-//               </div>
-//             )}
-
-//             {/* MIS (ADA only) */}
-//             {user.role === 'ada' && (
-//               <div>
-//                 <p className="font-semibold">MIS</p>
-//                 <Link to="/portal/mis/demo1" className="block pl-3 py-1">Download Submitted List</Link>
-//                 <Link to="/portal/mis/demo2" className="block pl-3 py-1">Download Approved List</Link>
-//               </div>
-//             )}
-
-//             {/* MEMBER (ADA only) */}
-//             {user.role === 'ada' && (
-//               <div>
-//                 <p className="font-semibold">Member</p>
-//                 <Link to="/portal/member/demo1" className="block pl-3 py-1">New Member</Link>
-//                 <Link to="/portal/member/demo2" className="block pl-3 py-1">Member List</Link>
-//               </div>
-//             )}
-//           </div>
-//         )}
-
-//         <div className="bg-[#1565c0] h-11 flex items-center justify-center text-white">
-//           Welcome to {ROLE_LABELS[user.role]} Portal Agricultural Labour Scheme
-//         </div>
-//       </>
-//     );
-//   }
-
-//   // ✅ Guest Header
-//   return (
-//     <>
-//       <header className="bg-white border-b shadow-sm">
-//         <div className="max-w-[1280px] mx-auto flex items-center justify-between px-4 py-3">
-//           <Link to="/">
-//             <img src="/image/logo_bsb.png" alt="Govt Logo" className="h-16 w-auto" />
-//           </Link>
-
-//           <div className="hidden sm:flex gap-2">
-//             <Link to="/status" className="bg-[#00ACED] text-white px-4 py-2 rounded">Check Application</Link>
-//             <button className="bg-[#00ACED] text-white px-4 py-2 rounded">New Application Form</button>
-//             <button className="bg-[#00ACED] text-white px-4 py-2 rounded">Faq</button>
-//           </div>
-
-//           <div className="sm:hidden">
-//             <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
-//               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-//             </button>
-//           </div>
-//         </div>
-
-//         {isMenuOpen && (
-//           <div className="sm:hidden px-4 pb-4 flex flex-col gap-2 bg-white border-t">
-//             <Link to="/status" className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">Check Application</Link>
-//             <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">New Application Form</button>
-//             <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">Faq</button>
-//           </div>
-//         )}
-//       </header>
-
-//       <div className="bg-[#0648b3] text-white py-2 text-center font-medium">
-//         Welcome to Agricultural Labour Portal
-//       </div>
-//     </>
-//   );
-// }
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useApplicants } from '../context/ApplicantContext';
 import {
   listFarmers,
   listADAPendings,
@@ -1043,7 +27,6 @@ const ROLE_LABELS = {
 
 export default function Header() {
   const { user } = useAuth();
-  const { applicants, loadFarmers } = useApplicants();
   const location = useLocation();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -1051,43 +34,62 @@ export default function Header() {
   const [adaMenuOpen, setAdaMenuOpen] = useState(false);
   const [misMenuOpen, setMisMenuOpen] = useState(false);
   const [memberMenuOpen, setMemberMenuOpen] = useState(false);
+  const [snoReportOpen, setSnoReportOpen] = useState(false);
+  const [snoApplicantOpen, setSnoApplicantOpen] = useState(false);
+  const [snoMemberOpen, setSnoMemberOpen] = useState(false);
+  const [snoDbtOpen, setSnoDbtOpen] = useState(false);
   const [misDownloading, setMisDownloading] = useState('');
+  const [snoReportDownloading, setSnoReportDownloading] = useState(false);
 
   const quickRef = useRef(null);
   const adaRef = useRef(null);
   const misRef = useRef(null);
   const memberRef = useRef(null);
+  const snoReportRef = useRef(null);
+  const snoApplicantRef = useRef(null);
+  const snoMemberRef = useRef(null);
+  const snoDbtRef = useRef(null);
 
   const dashboardPath = ROLE_HOME[user?.role] || '/';
-  const isActive = (path) => location.pathname === path;
+  const isExactActive = (path) => location.pathname === path;
+  const isPathActive = (prefix) => location.pathname.startsWith(prefix);
+
+  const closeAllDropdowns = () => {
+    setQuickRegOpen(false);
+    setAdaMenuOpen(false);
+    setMisMenuOpen(false);
+    setMemberMenuOpen(false);
+    setSnoReportOpen(false);
+    setSnoApplicantOpen(false);
+    setSnoMemberOpen(false);
+    setSnoDbtOpen(false);
+  };
 
   useEffect(() => {
-    const handler = (e) => {
-      if (
-        !quickRef.current?.contains(e.target) &&
-        !adaRef.current?.contains(e.target) &&
-        !misRef.current?.contains(e.target) &&
-        !memberRef.current?.contains(e.target)
-      ) {
-        setQuickRegOpen(false);
-        setAdaMenuOpen(false);
-        setMisMenuOpen(false);
-        setMemberMenuOpen(false);
-      }
+    const handler = (event) => {
+      const refs = [
+        quickRef,
+        adaRef,
+        misRef,
+        memberRef,
+        snoReportRef,
+        snoApplicantRef,
+        snoMemberRef,
+        snoDbtRef,
+      ];
+
+      const clickedInside = refs.some((ref) => ref.current?.contains(event.target));
+      if (!clickedInside) closeAllDropdowns();
     };
+
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   useEffect(() => {
     setIsMenuOpen(false);
+    closeAllDropdowns();
   }, [location.pathname]);
-
-  useEffect(() => {
-    if (user?.role === 'ada' && applicants.length === 0) {
-      loadFarmers();
-    }
-  }, [user?.role, applicants.length, loadFarmers]);
 
   const csvEscape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
@@ -1112,9 +114,9 @@ export default function Header() {
       app.aadhaar,
       app.mobile,
       app.status,
-      app.bank_name || app.fullForm?.bankName || '',
-      app.branch_name || app.fullForm?.branchName || '',
-      app.account_number || app.fullForm?.accountNumber || '',
+      app.bank_name || app.fullForm?.bankName || app.bankName || '',
+      app.branch_name || app.fullForm?.branchName || app.branchName || '',
+      app.account_number || app.fullForm?.accountNumber || app.accountNumber || '',
       app.ifsc || app.fullForm?.ifscCode || '',
     ]);
 
@@ -1167,15 +169,11 @@ export default function Header() {
         return fetchPagedStatusList(listADAReverted, 'reverted');
       case 'submitted': {
         const rows = await listFarmers();
-        return rows
-          .map(normalizeFarmer)
-          .filter((app) => app.status !== 'deleted');
+        return rows.map(normalizeFarmer).filter((app) => app.status !== 'deleted');
       }
       case 'sent_to_bank': {
         const rows = await listFarmers();
-        return rows
-          .map(normalizeFarmer)
-          .filter((app) => app.status === 'sent_to_bank');
+        return rows.map(normalizeFarmer).filter((app) => app.status === 'sent_to_bank');
       }
       default:
         return [];
@@ -1202,208 +200,261 @@ export default function Header() {
       setMisDownloading('');
     }
 
-    setMisMenuOpen(false);
+    closeAllDropdowns();
     setIsMenuOpen(false);
   };
+
+  const handleSnoReportDownload = async () => {
+    try {
+      setSnoReportDownloading(true);
+      const rows = await listFarmers();
+      const normalized = rows
+        .map(normalizeFarmer)
+        .filter((app) => app.status !== 'deleted');
+      downloadApplicantsCsv('sno_report', normalized);
+    } catch (error) {
+      window.alert(error.message || 'Report download failed');
+    } finally {
+      setSnoReportDownloading(false);
+    }
+
+    closeAllDropdowns();
+    setIsMenuOpen(false);
+  };
+
+  const toggleDropdown = (key) => {
+    const nextState = {
+      quick: key === 'quick' ? !quickRegOpen : false,
+      ada: key === 'ada' ? !adaMenuOpen : false,
+      mis: key === 'mis' ? !misMenuOpen : false,
+      member: key === 'member' ? !memberMenuOpen : false,
+      snoReport: key === 'snoReport' ? !snoReportOpen : false,
+      snoApplicant: key === 'snoApplicant' ? !snoApplicantOpen : false,
+      snoMember: key === 'snoMember' ? !snoMemberOpen : false,
+      snoDbt: key === 'snoDbt' ? !snoDbtOpen : false,
+    };
+
+    setQuickRegOpen(nextState.quick);
+    setAdaMenuOpen(nextState.ada);
+    setMisMenuOpen(nextState.mis);
+    setMemberMenuOpen(nextState.member);
+    setSnoReportOpen(nextState.snoReport);
+    setSnoApplicantOpen(nextState.snoApplicant);
+    setSnoMemberOpen(nextState.snoMember);
+    setSnoDbtOpen(nextState.snoDbt);
+  };
+
+  const DropdownIcon = () => (
+    <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  );
 
   if (user) {
     return (
       <>
         <header className="bg-white border-b border-gray-200 shadow-sm relative z-50">
           <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-[72px]">
-
             <Link to={dashboardPath}>
               <img src="/image/logo_bsb.png" alt="WB Govt" className="h-14" />
             </Link>
 
             <nav className="hidden sm:flex items-center gap-6 text-sm font-medium text-gray-700">
-
               <Link
                 to={dashboardPath}
-                className={`hover:text-[#0891b2] ${isActive(dashboardPath) ? 'text-[#0891b2] font-semibold' : ''}`}
+                className={`hover:text-[#0891b2] ${isExactActive(dashboardPath) ? 'text-[#0891b2] font-semibold' : ''}`}
               >
                 Dashboard
               </Link>
 
-              {/* Gramdoot */}
               {user.role === 'gramdoot' && (
                 <div className="relative" ref={quickRef}>
-                  <button
-                    onClick={() => {
-                      setQuickRegOpen(!quickRegOpen);
-                      setAdaMenuOpen(false);
-                      setMisMenuOpen(false);
-                      setMemberMenuOpen(false);
-                    }}
-                    className="flex gap-1"
-                  >
+                  <button type="button" onClick={() => toggleDropdown('quick')} className="flex items-center gap-1 hover:text-[#0891b2]">
                     Quick Registration
-                    <svg
-                      className="w-3.5 h-3.5 ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <DropdownIcon />
                   </button>
 
                   {quickRegOpen && (
                     <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg z-50">
-                      <Link to="/portal/quick-registration/new" className="block px-4 py-2">
-                        Registration Form
-                      </Link>
-                      <Link to="/portal/quick-registration/list" className="block px-4 py-2">
-                        Registered Applicant List
-                      </Link>
+                      <Link to="/portal/quick-registration/new" className="block px-4 py-2 hover:bg-gray-50">Registration Form</Link>
+                      <Link to="/portal/quick-registration/list" className="block px-4 py-2 hover:bg-gray-50">Registered Applicant List</Link>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* ADA */}
               {user.role === 'ada' && (
-                <div className="relative" ref={adaRef}>
-                  <button
-                    onClick={() => {
-                      setAdaMenuOpen(!adaMenuOpen);
-                      setQuickRegOpen(false);
-                      setMisMenuOpen(false);
-                      setMemberMenuOpen(false);
-                    }}
-                    className="flex items-center gap-1 hover:text-[#0891b2] hover:cursor-pointer"
-                  >
-                    Applicant List
-                    <svg
-                      className="w-3.5 h-3.5 ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
+                <>
+                  <div className="relative" ref={adaRef}>
+                    <button
+                      type="button"
+                      onClick={() => toggleDropdown('ada')}
+                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/ada/') && !isExactActive('/portal/ada/dashboard') ? 'text-[#0891b2] font-semibold' : ''}`}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                      Applicant List
+                      <DropdownIcon />
+                    </button>
 
-                  {adaMenuOpen && (
-                    <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg z-50">
-                      <Link to="/portal/ada/applications" className="block px-4 py-2">Applicant List</Link>
-                      <Link to="/portal/ada/pending" className="block px-4 py-2">Pending List</Link>
-                      <Link to="/portal/ada/approved" className="block px-4 py-2">Approved List</Link>
-                      <Link to="/portal/ada/send_to_bank" className="block px-4 py-2">Send to Bank List</Link>
-                      <Link to="/portal/ada/rejected_list" className="block px-4 py-2">Rejected List</Link>
-                      <Link to="/portal/ada/reverted_list" className="block px-4 py-2">Reverted List</Link>
-                      <Link to="/portal/ada/deleted_list" className="block px-4 py-2">Deleted List</Link>
-                    </div>
-                  )}
-                </div>
+                    {adaMenuOpen && (
+                      <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg z-50">
+                        <Link to="/portal/ada/applications" className="block px-4 py-2 hover:bg-gray-50">Applicant List</Link>
+                        <Link to="/portal/ada/pending" className="block px-4 py-2 hover:bg-gray-50">Pending List</Link>
+                        <Link to="/portal/ada/approved" className="block px-4 py-2 hover:bg-gray-50">Approved List</Link>
+                        <Link to="/portal/ada/send_to_bank" className="block px-4 py-2 hover:bg-gray-50">Send to Bank List</Link>
+                        <Link to="/portal/ada/rejected_list" className="block px-4 py-2 hover:bg-gray-50">Rejected List</Link>
+                        <Link to="/portal/ada/reverted_list" className="block px-4 py-2 hover:bg-gray-50">Reverted List</Link>
+                        <Link to="/portal/ada/deleted_list" className="block px-4 py-2 hover:bg-gray-50">Deleted List</Link>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative" ref={misRef}>
+                    <button
+                      type="button"
+                      onClick={() => toggleDropdown('mis')}
+                      className="flex items-center gap-1 hover:text-[#0891b2]"
+                    >
+                      MIS
+                      <DropdownIcon />
+                    </button>
+
+                    {misMenuOpen && (
+                      <div className="absolute mt-2 w-56 bg-white border rounded shadow-lg z-50">
+                        <button type="button" onClick={() => handleMisDownload('submitted')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'submitted' ? 'Downloading Submitted List...' : 'Download Submitted List'}</button>
+                        <button type="button" onClick={() => handleMisDownload('approved')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'approved' ? 'Downloading Approved List...' : 'Download Approved List'}</button>
+                        <button type="button" onClick={() => handleMisDownload('rejected')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'rejected' ? 'Downloading Rejected List...' : 'Download Rejected List'}</button>
+                        <button type="button" onClick={() => handleMisDownload('pending')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'pending' ? 'Downloading Pending List...' : 'Download Pending List'}</button>
+                        <button type="button" onClick={() => handleMisDownload('reverted')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'reverted' ? 'Downloading Reverted List...' : 'Download Reverted List'}</button>
+                        <button type="button" onClick={() => handleMisDownload('sent_to_bank')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'sent_to_bank' ? 'Downloading Send to Bank List...' : 'Download Send to Bank List'}</button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative" ref={memberRef}>
+                    <button
+                      type="button"
+                      onClick={() => toggleDropdown('member')}
+                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/ada/members') ? 'text-[#0891b2] font-semibold' : ''}`}
+                    >
+                      Members
+                      <DropdownIcon />
+                    </button>
+
+                    {memberMenuOpen && (
+                      <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg z-50">
+                        <Link to="/portal/ada/members/new" className="block px-4 py-2 hover:bg-gray-50">New Member</Link>
+                        <Link to="/portal/ada/members" className="block px-4 py-2 hover:bg-gray-50">Member List</Link>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
 
-              {/* MIS */}
-              {user.role === 'ada' && (
-                <div className="relative" ref={misRef}>
-                  <button
-                    onClick={() => {
-                      setMisMenuOpen(!misMenuOpen);
-                      setQuickRegOpen(false);
-                      setAdaMenuOpen(false);
-                      setMemberMenuOpen(false);
-                    }}
-                    className="flex items-center gap-1 hover:text-[#0891b2] hover:cursor-pointer"
-                  >
-                    MIS
-                    <svg
-                      className="w-3.5 h-3.5 ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
+              {user.role === 'sno' && (
+                <>
+                  <div className="relative" ref={snoReportRef}>
+                    <button
+                      type="button"
+                      onClick={() => toggleDropdown('snoReport')}
+                      className="flex items-center gap-1 hover:text-[#0891b2]"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                      Report
+                      <DropdownIcon />
+                    </button>
 
-                  {misMenuOpen && (
-                    <div className="absolute mt-2 w-56 bg-white border rounded shadow-lg z-50">
-                      <button type="button" onClick={() => handleMisDownload('submitted')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'submitted' ? 'Downloading Submitted List...' : 'Download Submitted List'}</button>
-                      <button type="button" onClick={() => handleMisDownload('approved')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'approved' ? 'Downloading Approved List...' : 'Download Approved List'}</button>
-                      <button type="button" onClick={() => handleMisDownload('rejected')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'rejected' ? 'Downloading Rejected List...' : 'Download Rejected List'}</button>
-                      <button type="button" onClick={() => handleMisDownload('pending')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'pending' ? 'Downloading Pending List...' : 'Download Pending List'}</button>
-                      <button type="button" onClick={() => handleMisDownload('reverted')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'reverted' ? 'Downloading Reverted List...' : 'Download Reverted List'}</button>
-                      <button type="button" onClick={() => handleMisDownload('sent_to_bank')} disabled={Boolean(misDownloading)} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{misDownloading === 'sent_to_bank' ? 'Downloading Send to Bank List...' : 'Download Send to Bank List'}</button>
-                    </div>
-                  )}
-                </div>
-              )}
+                    {snoReportOpen && (
+                      <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg z-50">
+                        <button
+                          type="button"
+                          onClick={handleSnoReportDownload}
+                          disabled={snoReportDownloading}
+                          className="block w-full text-left px-4 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {snoReportDownloading ? 'Downloading Report...' : 'Download Report'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-              {/* MEMBER */}
-              {user.role === 'ada' && (
-                <div className="relative" ref={memberRef}>
-                  <button
-                    onClick={() => {
-                      setMemberMenuOpen(!memberMenuOpen);
-                      setQuickRegOpen(false);
-                      setAdaMenuOpen(false);
-                      setMisMenuOpen(false);
-                    }}
-                    className="flex items-center gap-1 hover:text-[#0891b2] hover:cursor-pointer"
-                  >
-                    Member
-                    <svg
-                      className="w-3.5 h-3.5 ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
+                  <div className="relative" ref={snoApplicantRef}>
+                    <button
+                      type="button"
+                      onClick={() => toggleDropdown('snoApplicant')}
+                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/sno/approved') || isPathActive('/portal/sno/send_to_bank') || isPathActive('/portal/sno/rejected_list') ? 'text-[#0891b2] font-semibold' : ''}`}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-//                     </svg>
-                  </button>
+                      Applicant List
+                      <DropdownIcon />
+                    </button>
 
-                  {memberMenuOpen && (
-                    <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg z-50">
-                      <Link to="/portal/ada/members/new" className="block px-4 py-2">New Member</Link>
-                      <Link to="/portal/ada/members" className="block px-4 py-2">Member List</Link>
-                    </div>
-                  )}
-                </div>
+                    {snoApplicantOpen && (
+                      <div className="absolute mt-2 w-56 bg-white border rounded shadow-lg z-50">
+                        <Link to="/portal/sno/approved" className="block px-4 py-2 hover:bg-gray-50">DDA Approved List</Link>
+                        <Link to="/portal/sno/send_to_bank" className="block px-4 py-2 hover:bg-gray-50">Send to Bank List</Link>
+                        <Link to="/portal/sno/rejected_list" className="block px-4 py-2 hover:bg-gray-50">Rejected List</Link>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative" ref={snoMemberRef}>
+                    <button
+                      type="button"
+                      onClick={() => toggleDropdown('snoMember')}
+                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/sno/members') ? 'text-[#0891b2] font-semibold' : ''}`}
+                    >
+                      Members
+                      <DropdownIcon />
+                    </button>
+
+                    {snoMemberOpen && (
+                      <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg z-50">
+                        <Link to="/portal/sno/members/new" className="block px-4 py-2 hover:bg-gray-50">New Member</Link>
+                        <Link to="/portal/sno/members" className="block px-4 py-2 hover:bg-gray-50">Member List</Link>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative" ref={snoDbtRef}>
+                    <button
+                      type="button"
+                      onClick={() => toggleDropdown('snoDbt')}
+                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/sno/payment_file_list') ? 'text-[#0891b2] font-semibold' : ''}`}
+                    >
+                      DBT
+                      <DropdownIcon />
+                    </button>
+
+                    {snoDbtOpen && (
+                      <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg z-50">
+                        <Link to="/portal/sno/payment_file_list" className="block px-4 py-2 hover:bg-gray-50">Payment File List</Link>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
-
             </nav>
 
-            {/* Mobile Toggle */}
             <div className="sm:hidden">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              <button type="button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                 {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
               </button>
             </div>
-
           </div>
         </header>
 
-        {/* ✅ MOBILE MENU */}
         {isMenuOpen && (
           <div className="sm:hidden bg-white border-b border-gray-200 shadow-sm px-4 py-4 space-y-3 text-sm font-medium text-gray-700">
-
             <Link to={dashboardPath} className="block">
               Dashboard
             </Link>
 
-            {/* Gramdoot */}
             {user.role === 'gramdoot' && (
               <div>
                 <p className="font-semibold">Quick Registration</p>
-                <Link to="/portal/quick-registration/new" className="block pl-3 py-1">
-                  Registration Form
-                </Link>
-                <Link to="/portal/quick-registration/list" className="block pl-3 py-1">
-                  Registered Applicant List
-                </Link>
+                <Link to="/portal/quick-registration/new" className="block pl-3 py-1">Registration Form</Link>
+                <Link to="/portal/quick-registration/list" className="block pl-3 py-1">Registered Applicant List</Link>
               </div>
             )}
 
-            {/* ADA */}
             {user.role === 'ada' && (
               <>
                 <div>
@@ -1428,13 +479,41 @@ export default function Header() {
                 </div>
 
                 <div>
-                  <p className="font-semibold">Member</p>
+                  <p className="font-semibold">Members</p>
                   <Link to="/portal/ada/members/new" className="block pl-3 py-1">New Member</Link>
                   <Link to="/portal/ada/members" className="block pl-3 py-1">Member List</Link>
                 </div>
               </>
             )}
 
+            {user.role === 'sno' && (
+              <>
+                <div>
+                  <p className="font-semibold">Report</p>
+                  <button type="button" onClick={handleSnoReportDownload} disabled={snoReportDownloading} className="block pl-3 py-1 text-left disabled:opacity-50 disabled:cursor-not-allowed">
+                    {snoReportDownloading ? 'Downloading Report...' : 'Download Report'}
+                  </button>
+                </div>
+
+                <div>
+                  <p className="font-semibold">Applicant List</p>
+                  <Link to="/portal/sno/approved" className="block pl-3 py-1">DDA Approved List</Link>
+                  <Link to="/portal/sno/send_to_bank" className="block pl-3 py-1">Send to Bank List</Link>
+                  <Link to="/portal/sno/rejected_list" className="block pl-3 py-1">Rejected List</Link>
+                </div>
+
+                <div>
+                  <p className="font-semibold">Members</p>
+                  <Link to="/portal/sno/members/new" className="block pl-3 py-1">New Member</Link>
+                  <Link to="/portal/sno/members" className="block pl-3 py-1">Member List</Link>
+                </div>
+
+                <div>
+                  <p className="font-semibold">DBT</p>
+                  <Link to="/portal/sno/payment_file_list" className="block pl-3 py-1">Payment File List</Link>
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -1460,7 +539,7 @@ export default function Header() {
           </div>
 
           <div className="sm:hidden">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <button type="button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>

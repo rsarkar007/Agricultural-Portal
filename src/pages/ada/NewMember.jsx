@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { createAgent } from "../../api/client"; // ✅ Correct API
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { createAgent } from "../../api/client";
 import { useDataDirs } from "../../context/DataDirsContext";
 
 export default function NewMember() {
+    const location = useLocation();
+    const isSnoMemberPage = location.pathname.startsWith("/portal/sno/");
+    const defaultRole = isSnoMemberPage ? "Dda (admin)" : "Gramdoot";
+
     const {
         districts,
         blocksByDistrict,
@@ -19,7 +24,7 @@ export default function NewMember() {
         mobile: "",
         password: "",
         confirmPassword: "",
-        role: "Gramdoot",
+        role: defaultRole,
         firstName: "",
         lastName: "",
         gender: "",
@@ -36,20 +41,21 @@ export default function NewMember() {
         working_zone: { district_id: 10, block_id: 5 },
     };
 
-    // Get available districts based on role
     const getAvailableDistricts = () => {
-        if (formData.role === "Gramdoot" || formData.role === "Audit GD") {
+        if (
+            formData.role === "Gramdoot" ||
+            formData.role === "Audit GD" ||
+            formData.role === "Dda (admin)"
+        ) {
             return districts;
         }
         return [];
     };
 
-    // Get available blocks based on selected district
     const getAvailableBlocks = () => {
         return blocksByDistrict(formData.district_id);
     };
 
-    // Get available GPs based on selected block
     const getAvailableGPs = () => {
         return gpsByBlock(formData.block_id);
     };
@@ -57,6 +63,13 @@ export default function NewMember() {
     useEffect(() => {
         loadDistricts();
     }, [loadDistricts]);
+
+    useEffect(() => {
+        setFormData((prev) => ({
+            ...prev,
+            role: defaultRole,
+        }));
+    }, [defaultRole]);
 
     useEffect(() => {
         if (formData.district_id) {
@@ -70,9 +83,12 @@ export default function NewMember() {
         }
     }, [formData.block_id, loadGpsByBlock]);
 
-    // Reset dependent selections when role changes
     useEffect(() => {
-        if (formData.role === "Gramdoot" || formData.role === "Audit GD") {
+        if (
+            formData.role === "Gramdoot" ||
+            formData.role === "Audit GD" ||
+            formData.role === "Dda (admin)"
+        ) {
             setFormData((prev) => ({
                 ...prev,
                 district_id: "",
@@ -93,12 +109,13 @@ export default function NewMember() {
                 block_id: "",
                 gram_panchayat_id: "",
             }));
-        } else {
-            setFormData((prev) => ({
-                ...prev,
-                [name]: value,
-            }));
+            return;
         }
+
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
     };
 
     const handleDistrictChange = (e) => {
@@ -121,17 +138,13 @@ export default function NewMember() {
     };
 
     const validate = () => {
-        let newErrors = {};
+        const newErrors = {};
 
         if (!formData.email) newErrors.email = "Email is required";
         if (!formData.mobile) newErrors.mobile = "Mobile is required";
         if (!formData.password) newErrors.password = "Password is required";
-        if (!formData.confirmPassword)
-            newErrors.confirmPassword = "Confirm your password";
-
-        if (formData.password !== formData.confirmPassword)
-            newErrors.confirmPassword = "Passwords do not match";
-
+        if (!formData.confirmPassword) newErrors.confirmPassword = "Confirm your password";
+        if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match";
         if (!formData.firstName) newErrors.firstName = "First name is required";
         if (!formData.lastName) newErrors.lastName = "Last name is required";
         if (!formData.gender) newErrors.gender = "Gender is required";
@@ -155,31 +168,24 @@ export default function NewMember() {
                 email: formData.email,
                 password: formData.password,
                 mobile: formData.mobile,
-
                 role_id: formData.role === "Gramdoot" ? 8 : 7,
-
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 gender: formData.gender,
-
-                // ✅ REQUIRED EXTRA FIELDS (from your cURL)
                 fatherName: "NA",
                 dob: "1990-01-01",
-
                 address: "Default Address",
                 district_id: formData.district_id || currentUser.working_zone.district_id,
                 block_id: formData.block_id || currentUser.working_zone.block_id,
                 village_id: 1,
                 pincode: "700001",
                 gram_panchayat_id: formData.gram_panchayat_id || 1,
-
                 account_number: "1234567890",
                 account_holder_name: formData.firstName,
                 bank_name: "SBI",
                 ifsc_code: "SBIN0000001",
                 branch_name: "Default Branch",
                 account_type: "Savings",
-
                 wz_district_id: currentUser.working_zone.district_id,
                 wz_block_id: currentUser.working_zone.block_id,
             });
@@ -192,7 +198,7 @@ export default function NewMember() {
                 mobile: "",
                 password: "",
                 confirmPassword: "",
-                role: "Gramdoot",
+                role: defaultRole,
                 firstName: "",
                 lastName: "",
                 gender: "",
@@ -200,9 +206,7 @@ export default function NewMember() {
                 block_id: "",
                 gram_panchayat_id: "",
             });
-
             setErrors({});
-
         } catch (err) {
             console.error("FULL ERROR:", err);
             alert("Failed: " + err.message);
@@ -210,90 +214,68 @@ export default function NewMember() {
             setLoading(false);
         }
     };
+
     return (
-        <>
-            <main className="grow w-full px-4 py-8">
-                <div className="max-w-6xl mx-auto">
+        <main className="grow w-full px-4 py-8">
+            <div className="max-w-6xl mx-auto">
+                <h2 className="text-base font-bold text-gray-700 tracking-widest uppercase mb-6">
+                    New Member
+                </h2>
 
-                    <h2 className="text-base font-bold text-gray-700 tracking-widest uppercase mb-6">
-                        New Member
-                    </h2>
+                <div className="border border-gray-200 p-6">
+                    <form onSubmit={handleSubmit}>
+                        <div className="grid grid-cols-4 gap-4 mb-6">
+                            <Field label="Email *" error={errors.email}>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                />
+                            </Field>
 
-                    <div className="border border-gray-200 p-6">
+                            <Field label="Mobile *" error={errors.mobile}>
+                                <input
+                                    type="text"
+                                    name="mobile"
+                                    value={formData.mobile}
+                                    onChange={handleChange}
+                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                />
+                            </Field>
 
-                        <form onSubmit={handleSubmit}>
-                            {/* ROW 1: Email, Mobile, Password, Confirm Password */}
-                            <div className="grid grid-cols-4 gap-4 mb-6">
+                            <Field label="Password *" error={errors.password}>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                />
+                            </Field>
 
-                                {/* Email */}
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600">Email *</label>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                    />
-                                    {errors.email && (
-                                        <p className="text-red-500 text-xs">{errors.email}</p>
-                                    )}
-                                </div>
+                            <Field label="Confirm Password *" error={errors.confirmPassword}>
+                                <input
+                                    type="password"
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                />
+                            </Field>
+                        </div>
 
-                                {/* Mobile */}
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600">Mobile *</label>
+                        <div className="grid grid-cols-4 gap-4 mb-6">
+                            <Field label="Role *">
+                                {isSnoMemberPage ? (
                                     <input
                                         type="text"
-                                        name="mobile"
-                                        value={formData.mobile}
-                                        onChange={handleChange}
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                        value="Dda (admin)"
+                                        readOnly
+                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm bg-gray-100 text-gray-700"
                                     />
-                                    {errors.mobile && (
-                                        <p className="text-red-500 text-xs">{errors.mobile}</p>
-                                    )}
-                                </div>
-
-                                {/* Password */}
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600">Password *</label>
-                                    <input
-                                        type="password"
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                    />
-                                    {errors.password && (
-                                        <p className="text-red-500 text-xs">{errors.password}</p>
-                                    )}
-                                </div>
-
-                                {/* Confirm Password */}
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600">Confirm Password *</label>
-                                    <input
-                                        type="password"
-                                        name="confirmPassword"
-                                        value={formData.confirmPassword}
-                                        onChange={handleChange}
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                    />
-                                    {errors.confirmPassword && (
-                                        <p className="text-red-500 text-xs">
-                                            {errors.confirmPassword}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* ROW 2: Role, First Name, Last Name, Gender */}
-                            <div className="grid grid-cols-4 gap-4 mb-6">
-
-                                {/* Role */}
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600">Role *</label>
+                                ) : (
                                     <select
                                         name="role"
                                         value={formData.role}
@@ -303,157 +285,132 @@ export default function NewMember() {
                                         <option value="Gramdoot">Gramdoot</option>
                                         <option value="Audit GD">Audit GD</option>
                                     </select>
-                                </div>
+                                )}
+                            </Field>
 
-                                {/* First Name */}
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600">First Name *</label>
-                                    <input
-                                        type="text"
-                                        name="firstName"
-                                        value={formData.firstName}
-                                        onChange={handleChange}
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                    />
-                                    {errors.firstName && (
-                                        <p className="text-red-500 text-xs">{errors.firstName}</p>
-                                    )}
-                                </div>
+                            <Field label="First Name *" error={errors.firstName}>
+                                <input
+                                    type="text"
+                                    name="firstName"
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                />
+                            </Field>
 
-                                {/* Last Name */}
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600">Last Name *</label>
-                                    <input
-                                        type="text"
-                                        name="lastName"
-                                        value={formData.lastName}
-                                        onChange={handleChange}
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                    />
-                                    {errors.lastName && (
-                                        <p className="text-red-500 text-xs">{errors.lastName}</p>
-                                    )}
-                                </div>
+                            <Field label="Last Name *" error={errors.lastName}>
+                                <input
+                                    type="text"
+                                    name="lastName"
+                                    value={formData.lastName}
+                                    onChange={handleChange}
+                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                />
+                            </Field>
 
-                                {/* Gender */}
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600">Gender *</label>
-                                    <select
-                                        name="gender"
-                                        value={formData.gender}
-                                        onChange={handleChange}
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                    >
-                                        <option value="">Select</option>
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                    {errors.gender && (
-                                        <p className="text-red-500 text-xs">{errors.gender}</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* ROW 3: District, Block, Gram Panchayat */}
-                            <div className="grid grid-cols-3 gap-4 mb-6">
-
-                                {/* District */}
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600">District *</label>
-                                    <select
-                                        name="district_id"
-                                        value={formData.district_id}
-                                        onChange={handleDistrictChange}
-                                        disabled={dataLoading || locationLoading.districts}
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
-                                    >
-                                        <option value="">Select District</option>
-                                        {getAvailableDistricts().map((district) => (
-                                            <option key={district.id} value={district.id}>
-                                                {district.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.district_id && (
-                                        <p className="text-red-500 text-xs">{errors.district_id}</p>
-                                    )}
-                                </div>
-
-                                {/* Block */}
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600">Block *</label>
-                                    <select
-                                        name="block_id"
-                                        value={formData.block_id}
-                                        onChange={handleBlockChange}
-                                        disabled={!formData.district_id || dataLoading || locationLoading.blocks}
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
-                                    >
-                                        <option value="">Select Block</option>
-                                        {getAvailableBlocks().length > 0 ? (
-                                            getAvailableBlocks().map((block) => (
-                                                <option key={block.id} value={block.id}>
-                                                    {block.name}
-                                                </option>
-                                            ))
-                                        ) : (
-                                            <option disabled>No blocks available</option>
-                                        )}
-                                    </select>
-                                    {errors.block_id && (
-                                        <p className="text-red-500 text-xs">{errors.block_id}</p>
-                                    )}
-                                </div>
-
-                                {/* Gram Panchayat */}
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600">Gram Panchayat *</label>
-                                    <select
-                                        name="gram_panchayat_id"
-                                        value={formData.gram_panchayat_id}
-                                        onChange={(e) => {
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                gram_panchayat_id: Number(e.target.value) || "",
-                                            }));
-                                        }}
-                                        disabled={!formData.block_id || dataLoading || locationLoading.gramPanchayats}
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
-                                    >
-                                        <option value="">Select GP</option>
-                                        {getAvailableGPs().length > 0 ? (
-                                            getAvailableGPs().map((gp) => (
-                                                <option key={gp.id} value={gp.id}>
-                                                    {gp.name}
-                                                </option>
-                                            ))
-                                        ) : (
-                                            <option disabled>No GPs available</option>
-                                        )}
-                                    </select>
-                                    {errors.gram_panchayat_id && (
-                                        <p className="text-red-500 text-xs">{errors.gram_panchayat_id}</p>
-                                    )}
-                                </div>
-
-                            </div>
-
-                            <div className="flex justify-center mt-8">
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-6 py-2 rounded disabled:opacity-50"
+                            <Field label="Gender *" error={errors.gender}>
+                                <select
+                                    name="gender"
+                                    value={formData.gender}
+                                    onChange={handleChange}
+                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
                                 >
-                                    {loading ? "Submitting..." : "Submit"}
-                                </button>
-                            </div>
+                                    <option value="">Select</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </Field>
+                        </div>
 
-                        </form>
-                    </div>
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            <Field label="District *" error={errors.district_id}>
+                                <select
+                                    name="district_id"
+                                    value={formData.district_id}
+                                    onChange={handleDistrictChange}
+                                    disabled={dataLoading || locationLoading.districts}
+                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
+                                >
+                                    <option value="">Select District</option>
+                                    {getAvailableDistricts().map((district) => (
+                                        <option key={district.id} value={district.id}>
+                                            {district.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Field>
 
+                            <Field label="Block *" error={errors.block_id}>
+                                <select
+                                    name="block_id"
+                                    value={formData.block_id}
+                                    onChange={handleBlockChange}
+                                    disabled={!formData.district_id || dataLoading || locationLoading.blocks}
+                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
+                                >
+                                    <option value="">Select Block</option>
+                                    {getAvailableBlocks().length > 0 ? (
+                                        getAvailableBlocks().map((block) => (
+                                            <option key={block.id} value={block.id}>
+                                                {block.name}
+                                            </option>
+                                        ))
+                                    ) : (
+                                        <option disabled>No blocks available</option>
+                                    )}
+                                </select>
+                            </Field>
+
+                            <Field label="Gram Panchayat *" error={errors.gram_panchayat_id}>
+                                <select
+                                    name="gram_panchayat_id"
+                                    value={formData.gram_panchayat_id}
+                                    onChange={(e) => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            gram_panchayat_id: Number(e.target.value) || "",
+                                        }));
+                                    }}
+                                    disabled={!formData.block_id || dataLoading || locationLoading.gramPanchayats}
+                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
+                                >
+                                    <option value="">Select GP</option>
+                                    {getAvailableGPs().length > 0 ? (
+                                        getAvailableGPs().map((gp) => (
+                                            <option key={gp.id} value={gp.id}>
+                                                {gp.name}
+                                            </option>
+                                        ))
+                                    ) : (
+                                        <option disabled>No GPs available</option>
+                                    )}
+                                </select>
+                            </Field>
+                        </div>
+
+                        <div className="flex justify-center mt-8">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-6 py-2 rounded disabled:opacity-50"
+                            >
+                                {loading ? "Submitting..." : "Submit"}
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </main>
-        </>
+            </div>
+        </main>
+    );
+}
+
+function Field({ label, error, children }) {
+    return (
+        <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-600">{label}</label>
+            {children}
+            {error && <p className="text-red-500 text-xs">{error}</p>}
+        </div>
     );
 }
