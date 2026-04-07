@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApplicants } from '../../context/ApplicantContext';
 import { useDataDirs } from '../../context/DataDirsContext';
 import { lookupIFSC, updateFarmerMultipart, normalizeFarmer } from '../../api/client';
+import { useNotification } from '../../context/NotificationContext';
 // ─── UI dropdown constants ────────────────────────────────────────────────────
 const RELATIONS    = ['Son', 'Daughter', 'Wife', 'Husband', 'Mother', 'Father', 'Brother', 'Sister', 'Other'];
 const GENDERS      = ['Male', 'Female', 'Other'];
@@ -98,6 +99,7 @@ function calcAge(dob) {
 }
 
 export default function FullRegistrationForm() {
+  const { notifySuccess, notifyError } = useNotification();
   const { user } = useAuth();
   const { applicants, updateApplicant } = useApplicants();
   const {
@@ -266,9 +268,12 @@ export default function FullRegistrationForm() {
       // Sync local state so applicant list / dashboard reflect the update
       updateApplicant(record.id, normalized);
       setSubmitted(true);
+      notifySuccess('Application updated successfully');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      setErrors((prev) => ({ ...prev, _form: err.message || 'Submission failed. Please try again.' }));
+      const message = err.message || 'Submission failed. Please try again.';
+      setErrors((prev) => ({ ...prev, _form: message }));
+      notifyError(message);
     }
   };
 

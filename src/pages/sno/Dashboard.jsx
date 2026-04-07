@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useApplicants } from '../../context/ApplicantContext';
 import { useDataDirs } from '../../context/DataDirsContext';
 
@@ -10,50 +10,37 @@ export default function SNODashboard() {
     loadFarmers();
   }, [loadFarmers]);
 
-  const [showWelcome] = useState(() => {
-    const flag = sessionStorage.getItem('km_just_logged_in');
-    if (flag) {
-      sessionStorage.removeItem('km_just_logged_in');
-      return true;
-    }
-    return false;
-  });
-
   const visible = useMemo(
     () => applicants.filter((applicant) => applicant.status !== 'deleted'),
     [applicants]
   );
 
   const gpRows = useMemo(() => {
-    const groupedRows = {};
+    const grouped = {};
 
     visible.forEach((applicant) => {
       const gpId = applicant.fullForm?.gramPanchayat || '';
       const key = gpId || '-';
 
-      if (!groupedRows[key]) {
-        groupedRows[key] = { total: 0, approved: 0, rejected: 0, pending: 0 };
+      if (!grouped[key]) {
+        grouped[key] = { total: 0, approved: 0, rejected: 0, pending: 0 };
       }
 
-      groupedRows[key].total++;
+      grouped[key].total += 1;
 
-      if (
-        applicant.status === 'approved' ||
-        applicant.status === 'sent_to_bank' ||
-        applicant.status === 'processed'
-      ) {
-        groupedRows[key].approved++;
+      if (['approved', 'sent_to_bank', 'processed'].includes(applicant.status)) {
+        grouped[key].approved += 1;
       } else if (applicant.status === 'rejected') {
-        groupedRows[key].rejected++;
+        grouped[key].rejected += 1;
       } else {
-        groupedRows[key].pending++;
+        grouped[key].pending += 1;
       }
     });
 
-    return Object.entries(groupedRows).sort(([a], [b]) => {
-      const nameA = gpName(a) || a;
-      const nameB = gpName(b) || b;
-      return nameA.localeCompare(nameB);
+    return Object.entries(grouped).sort(([left], [right]) => {
+      const leftName = gpName(left) || left;
+      const rightName = gpName(right) || right;
+      return leftName.localeCompare(rightName);
     });
   }, [visible, gpName]);
 
@@ -70,10 +57,7 @@ export default function SNODashboard() {
   const downloadCSV = () => {
     const header = 'Sl No,Gram Panchayat,Total Submitted,Approved,Rejected,Pending\n';
     const rows = gpRows
-      .map(
-        ([gpId, value], index) =>
-          `${index + 1},"${gpName(gpId) || gpId}",${value.total},${value.approved},${value.rejected},${value.pending}`
-      )
+      .map(([gpId, value], index) => `${index + 1},"${gpName(gpId) || gpId}",${value.total},${value.approved},${value.rejected},${value.pending}`)
       .join('\n');
     const total = `Total,,${totals.total},${totals.approved},${totals.rejected},${totals.pending}`;
     const blob = new Blob([header + rows + '\n' + total], { type: 'text/csv' });
@@ -87,21 +71,15 @@ export default function SNODashboard() {
 
   return (
     <main className="grow w-full px-0 py-0">
-      {showWelcome && (
-        <div className="w-full bg-[#d9edf7] border-b border-[#bcdff1] px-6 py-3 text-[#31708f] text-sm font-medium">
-          Signed in successfully.
-        </div>
-      )}
-
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-sm font-bold text-gray-800 text-center tracking-widest mb-6 uppercase">
+      <div className="app-content-width px-4 py-8">
+        <h2 className="section-title text-sm font-bold text-gray-800 text-center mb-6 uppercase">
           Dashboard Summary
         </h2>
 
-        <div className="flex items-center justify-between mb-3">
+        <div className="panel-card-soft px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
           <button
             onClick={downloadCSV}
-            className="bg-[#4caf50] hover:bg-[#388e3c] text-white text-xs font-semibold px-4 py-2 rounded transition-colors"
+            className="bg-[#4caf50] hover:bg-[#388e3c] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors"
           >
             Download CSV
           </button>
@@ -113,10 +91,10 @@ export default function SNODashboard() {
           </div>
         </div>
 
-        <div className="overflow-x-auto border border-gray-200">
+        <div className="table-shell overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="bg-gray-100 text-gray-700 text-xs font-semibold border-b border-gray-300">
+              <tr className="text-gray-700 text-xs font-semibold border-b border-gray-300">
                 <th className="px-4 py-2.5 text-center border-r border-gray-200 w-16">Sl No</th>
                 <th className="px-4 py-2.5 text-center border-r border-gray-200">Gram Panchayat</th>
                 <th className="px-4 py-2.5 text-center border-r border-gray-200">Total Submitted Application</th>

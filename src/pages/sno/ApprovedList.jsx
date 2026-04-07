@@ -5,8 +5,11 @@ import {
   listADAPendings,
   normalizeFarmer,
 } from '../../api/client';
+import { useNotification } from '../../context/NotificationContext';
+import CyanSpinner from '../../components/CyanSpinner';
 
 export default function SNODDAApprovedList() {
+  const { notifySuccess, notifyError } = useNotification();
   const navigate = useNavigate();
   const { search } = useLocation();
   const params = new URLSearchParams(search);
@@ -14,19 +17,16 @@ export default function SNODDAApprovedList() {
 
   const [rows, setRows] = useState([]);
   const [loadingRows, setLoadingRows] = useState(false);
-  const [actionError, setActionError] = useState('');
-  const [actionSuccess, setActionSuccess] = useState('');
   const [paymentGenerating, setPaymentGenerating] = useState(false);
 
   const loadApprovedRows = async () => {
     try {
       setLoadingRows(true);
-      setActionError('');
       const { items } = await listADAPendings(1);
       setRows(items.map(normalizeFarmer));
     } catch (error) {
       setRows([]);
-      setActionError(error.message || 'Failed to load DDA approved list');
+      notifyError(error.message || 'Failed to load DDA approved list');
     } finally {
       setLoadingRows(false);
     }
@@ -50,8 +50,6 @@ export default function SNODDAApprovedList() {
 
   const handleGeneratePaymentFile = async () => {
     try {
-      setActionError('');
-      setActionSuccess('');
       setPaymentGenerating(true);
       const result = await generateADAPaymentFile();
 
@@ -62,12 +60,15 @@ export default function SNODDAApprovedList() {
         link.download = result.filename || 'payment_file.csv';
         link.click();
         URL.revokeObjectURL(url);
-        setActionSuccess(`Payment file generated: ${result.filename || 'payment_file.csv'}`);
+        const message = `Payment file generated: ${result.filename || 'payment_file.csv'}`;
+        notifySuccess(message);
       } else {
-        setActionSuccess(result?.message || 'Payment file generated successfully');
+        const message = result?.message || 'Payment file generated successfully';
+        notifySuccess(message);
       }
     } catch (error) {
-      setActionError(error.message || 'Payment file generation failed');
+      const message = error.message || 'Payment file generation failed';
+      notifyError(message);
     } finally {
       setPaymentGenerating(false);
     }
@@ -75,24 +76,24 @@ export default function SNODDAApprovedList() {
 
   return (
     <main className="flex-grow w-full px-4 py-8">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-base font-bold text-gray-700 tracking-widest uppercase mb-4">
+      <div className="app-content-width">
+        <h2 className="section-title text-base font-bold text-gray-700 uppercase mb-4">
           DDA Approved Applicant List
         </h2>
 
-        <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="panel-card-soft mb-6 flex flex-wrap items-center gap-3 p-4">
           <button
             type="button"
             onClick={handleGeneratePaymentFile}
             disabled={paymentGenerating || list.length === 0}
-            className="bg-[#3e7fbe] hover:bg-[#336ea6] text-white text-sm font-medium px-5 py-1.5 rounded transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="bg-[#3e7fbe] hover:bg-[#336ea6] text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {paymentGenerating ? 'Generating...' : 'Generate Payment File'}
           </button>
           <button
             type="button"
             onClick={loadApprovedRows}
-            className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-1.5 rounded transition-colors"
+            className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
           >
             {loadingRows ? 'Loading...' : 'Refresh'}
           </button>
@@ -100,45 +101,16 @@ export default function SNODDAApprovedList() {
             Payment file pending: {paymentFilePendingCount}
           </span>
         </div>
-
-        {/*{actionError && (
-          <div className="mb-3 flex items-start justify-between gap-3 rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-            <span>{actionError}</span>
-            <button
-              type="button"
-              onClick={() => setActionError('')}
-              className="shrink-0 text-red-500 transition-colors hover:text-red-700"
-              aria-label="Dismiss error message"
-            >
-              <CloseIcon />
-            </button>
-          </div>
-        )}*/}
-
-        {actionSuccess && (
-          <div className="mb-3 flex items-start justify-between gap-3 rounded border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
-            <span>{actionSuccess}</span>
-            <button
-              type="button"
-              onClick={() => setActionSuccess('')}
-              className="shrink-0 text-green-500 transition-colors hover:text-green-700"
-              aria-label="Dismiss success message"
-            >
-              <CloseIcon />
-            </button>
-          </div>
-        )}
-
         <div className="flex items-center justify-between mb-2">
           <p className="text-[#0891b2] font-bold text-sm">
             Approved Applicant List ({list.length})
           </p>
         </div>
 
-        <div className="overflow-x-auto border border-gray-200 rounded">
+        <div className="table-shell overflow-x-auto">
           <table className="w-full text-sm border-collapse min-w-[1200px]">
             <thead>
-              <tr className="bg-gray-50 text-gray-700 text-xs font-semibold border-b border-gray-200">
+              <tr className="text-gray-700 text-xs font-semibold border-b border-gray-200">
                 <th className="px-3 py-2.5 text-center border-r border-gray-200 w-10">#</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Acknowledgement ID</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Khetmajur ID</th>
@@ -155,10 +127,16 @@ export default function SNODDAApprovedList() {
               </tr>
             </thead>
             <tbody>
-              {list.length === 0 ? (
+              {loadingRows ? (
+                <tr>
+                  <td colSpan={13} className="py-4">
+                    <CyanSpinner label="Loading records..." />
+                  </td>
+                </tr>
+              ) : list.length === 0 ? (
                 <tr>
                   <td colSpan={13} className="text-center py-10 text-gray-400 text-sm">
-                    {loadingRows ? 'Loading records...' : 'No approved applications found.'}
+                    No approved applications found.
                   </td>
                 </tr>
               ) : (
@@ -216,14 +194,6 @@ function EyeIcon() {
     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
     </svg>
   );
 }

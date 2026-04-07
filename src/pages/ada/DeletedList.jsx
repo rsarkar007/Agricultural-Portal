@@ -2,10 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApplicants } from '../../context/ApplicantContext';
 import { useDataDirs } from '../../context/DataDirsContext';
+import CyanSpinner from '../../components/CyanSpinner';
 
 export default function ADADeletedApplicantList() {
   const navigate = useNavigate();
-  const { applicants, loadFarmers } = useApplicants();
+  const { applicants, loadFarmers, loadingFarmers } = useApplicants();
   const { gramPanchayats } = useDataDirs();
 
   const [filters, setFilters] = useState({
@@ -45,17 +46,17 @@ export default function ADADeletedApplicantList() {
 
   return (
     <main className="grow w-full px-4 py-8">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-base font-bold text-gray-700 tracking-widest uppercase mb-4">
+      <div className="app-content-width">
+        <h2 className="section-title text-base font-bold text-gray-700 uppercase mb-4">
           Deleted Search Application
         </h2>
 
         <div className="mb-6">
-          <div className="flex flex-wrap gap-3 items-end">
-            <FilterInput label="Acknowledgement ID" name="ack" value={filters.ack} onChange={handleChange} />
-            <FilterInput label="Applicant Name" name="name" value={filters.name} onChange={handleChange} />
-            <FilterInput label="Aadhar No" name="aadhaar" value={filters.aadhaar} onChange={handleChange} narrow />
-            <FilterInput label="Mobile No" name="mobile" value={filters.mobile} onChange={handleChange} narrow />
+          <div className="panel-card-soft flex flex-wrap gap-3 items-end p-4">
+            <SearchInput label="Acknowledgement ID" value={filters.ack} onChange={(v) => setFilters((prev) => ({ ...prev, ack: v }))} />
+            <SearchInput label="Applicant Name" value={filters.name} onChange={(v) => setFilters((prev) => ({ ...prev, name: v }))} />
+            <SearchInput label="Aadhar No" value={filters.aadhaar} onChange={(v) => setFilters((prev) => ({ ...prev, aadhaar: v }))} narrow />
+            <SearchInput label="Mobile No" value={filters.mobile} onChange={(v) => setFilters((prev) => ({ ...prev, mobile: v }))} narrow />
 
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-600">Gram Panchayat</label>
@@ -63,7 +64,7 @@ export default function ADADeletedApplicantList() {
                 name="gp"
                 value={filters.gp}
                 onChange={handleChange}
-                className="border border-gray-300 rounded px-3 py-1.5 text-sm w-52 focus:outline-none focus:border-[#3eb0c9]"
+                className="field-input !rounded-xl !px-3 !py-2 text-sm w-52"
               >
                 <option value="">Select Gram Panchayat</option>
                 {gramPanchayats?.map((gp) => (
@@ -73,13 +74,13 @@ export default function ADADeletedApplicantList() {
             </div>
 
             <div className="flex gap-2 pb-0.5">
-              <button type="button" className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-1.5 rounded transition-colors">
+              <button type="button" className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors">
                 Search
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-1.5 rounded transition-colors"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
               >
                 Reset
               </button>
@@ -100,12 +101,12 @@ export default function ADADeletedApplicantList() {
           </button>
         </div>
 
-        <div className="overflow-x-auto border border-gray-200 rounded">
+        <div className="table-shell overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="bg-gray-50 text-gray-700 text-xs font-semibold border-b border-gray-200">
+              <tr className="text-gray-700 text-xs font-semibold border-b border-gray-200">
                 <th className="px-3 py-2.5 text-center border-r border-gray-200 w-10">#</th>
-                <th className="px-3 py-2.5 text-center border-r border-gray-200">Acknowledgement ID</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Ack ID</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Applicant Name</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Aadhaar No</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Mobile No</th>
@@ -113,13 +114,19 @@ export default function ADADeletedApplicantList() {
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Branch Name</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Account Number</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">IFSC</th>
-                <th className="px-3 py-2.5 text-center border-r border-gray-200">Present in KB(N)</th>
-                <th className="px-3 py-2.5 text-center border-r border-gray-200">Applied for Yuvasathi</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">KB(N)</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Yuvasathi</th>
                 <th className="px-3 py-2.5 text-center">Action</th>
               </tr>
             </thead>
             <tbody>
-              {deletedApplicants.length === 0 ? (
+              {loadingFarmers ? (
+                <tr>
+                  <td colSpan="12" className="py-4">
+                    <CyanSpinner label="Loading records..." />
+                  </td>
+                </tr>
+              ) : deletedApplicants.length === 0 ? (
                 <tr>
                   <td colSpan="12" className="text-center py-10 text-gray-400 text-sm">
                     No deleted applicants found.
@@ -131,8 +138,8 @@ export default function ADADeletedApplicantList() {
                     <td className="px-3 py-2 text-center text-xs text-gray-500 border-r border-gray-100">{index + 1}</td>
                     <td className="px-3 py-2 text-center text-xs font-mono text-[#0891b2] border-r border-gray-100">{app.ackId}</td>
                     <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.name}</td>
-                    <td className="px-3 py-2 text-center text-xs font-mono border-r border-gray-100">{app.aadhaar}</td>
-                    <td className="px-3 py-2 text-center text-xs font-mono border-r border-gray-100">{app.mobile}</td>
+                    <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.aadhaar}</td>
+                    <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.mobile}</td>
                     <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.bank_name || app.fullForm?.bankName || '—'}</td>
                     <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.branch_name || app.fullForm?.branchName || '—'}</td>
                     <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.account_number || app.fullForm?.accountNumber || '—'}</td>
@@ -155,28 +162,35 @@ export default function ADADeletedApplicantList() {
   );
 }
 
-function FilterInput({ label, name, value, onChange, narrow = false }) {
+function SearchInput({ label, value, onChange, narrow = false }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs text-gray-600">{label}</label>
       <input
-        type="text"
-        name={name}
         value={value}
-        onChange={onChange}
-        className={`border border-gray-300 rounded px-3 py-1.5 text-sm ${narrow ? 'w-40' : 'w-52'} focus:outline-none focus:border-[#3eb0c9]`}
+        onChange={(e) => onChange(e.target.value)}
+        className={`field-input !rounded-xl !px-3 !py-2 text-sm ${narrow ? 'w-40' : 'w-52'}`}
       />
     </div>
   );
 }
 
-function ActionBtn({ onClick, title, children }) {
+function ActionBtn({ color = 'cyan', title, onClick, children, disabled = false }) {
+  const colorMap = {
+    cyan: 'bg-[#3eb0c9] hover:bg-[#2a9ab0]',
+    green: 'bg-green-600 hover:bg-green-700',
+    orange: 'bg-orange-500 hover:bg-orange-600',
+    blue: 'bg-blue-600 hover:bg-blue-700',
+    red: 'bg-red-600 hover:bg-red-700',
+  };
+
   return (
     <button
       type="button"
       title={title}
       onClick={onClick}
-      className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white p-1.5 rounded transition-colors"
+      disabled={disabled}
+      className={`${colorMap[color]} text-white p-1.5 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed`}
     >
       {children}
     </button>

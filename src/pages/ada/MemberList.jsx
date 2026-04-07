@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { listMembers, normalizeMember, toggleMemberActive } from '../../api/client';
+import { useNotification } from '../../context/NotificationContext';
+import CyanSpinner from '../../components/CyanSpinner';
 
 export default function MemberPage() {
+  const { notifySuccess, notifyError } = useNotification();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -75,6 +78,7 @@ export default function MemberPage() {
         setMembers((prev) => prev.map((item) => (item.id === member.id ? { ...item, ...normalized } : item)));
       }
       await loadMembers();
+      notifySuccess(`Member ${nextActive ? 'activated' : 'deactivated'} successfully`);
     } catch (e) {
       setMembers((prev) =>
         prev.map((item) =>
@@ -83,7 +87,9 @@ export default function MemberPage() {
             : item
         )
       );
-      setError(e.message || 'Failed to toggle member status');
+      const message = e.message || 'Failed to toggle member status';
+      setError(message);
+      notifyError(message);
     } finally {
       setActingId(null);
     }
@@ -91,20 +97,20 @@ export default function MemberPage() {
 
   return (
     <main className="grow w-full px-4 py-8">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-base font-bold text-gray-700 tracking-widest uppercase mb-4">
+      <div className="app-content-width">
+        <h2 className="section-title text-base font-bold text-gray-700 uppercase mb-4">
           Search Member
         </h2>
 
         <div className="mb-6">
-          <div className="flex flex-wrap gap-3 items-end">
+          <div className="panel-card-soft flex flex-wrap gap-3 items-end p-4">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-600">Name</label>
               <input
                 placeholder="Search by name"
                 value={search.name}
                 onChange={(e) => setSearch({ ...search, name: e.target.value })}
-                className="border border-gray-300 rounded px-3 py-1.5 text-sm w-48 focus:outline-none focus:border-[#3eb0c9]"
+                className="field-input !rounded-xl !px-3 !py-2 text-sm w-48"
               />
             </div>
 
@@ -114,7 +120,7 @@ export default function MemberPage() {
                 placeholder="Search by email"
                 value={search.email}
                 onChange={(e) => setSearch({ ...search, email: e.target.value })}
-                className="border border-gray-300 rounded px-3 py-1.5 text-sm w-52 focus:outline-none focus:border-[#3eb0c9]"
+                className="field-input !rounded-xl !px-3 !py-2 text-sm w-52"
               />
             </div>
 
@@ -124,7 +130,7 @@ export default function MemberPage() {
                 placeholder="Search by mobile"
                 value={search.mobile}
                 onChange={(e) => setSearch({ ...search, mobile: e.target.value })}
-                className="border border-gray-300 rounded px-3 py-1.5 text-sm w-40 focus:outline-none focus:border-[#3eb0c9]"
+                className="field-input !rounded-xl !px-3 !py-2 text-sm w-40"
               />
             </div>
 
@@ -133,7 +139,7 @@ export default function MemberPage() {
               <select
                 value={search.role}
                 onChange={(e) => setSearch({ ...search, role: e.target.value })}
-                className="border border-gray-300 rounded px-3 py-1.5 text-sm w-44 focus:outline-none focus:border-[#3eb0c9]"
+                className="field-input !rounded-xl !px-3 !py-2 text-sm w-44"
               >
                 <option value="">All Roles</option>
                 {roles.map((role) => (
@@ -146,14 +152,14 @@ export default function MemberPage() {
               <button
                 type="button"
                 onClick={loadMembers}
-                className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-1.5 rounded"
+                className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
               >
                 Search
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-1.5 rounded"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
               >
                 Reset
               </button>
@@ -180,10 +186,10 @@ export default function MemberPage() {
           </button>
         </div>
 
-        <div className="overflow-x-auto border border-gray-200 rounded">
+        <div className="table-shell overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="bg-gray-50 text-gray-700 text-xs font-semibold border-b border-gray-200">
+              <tr className="text-gray-700 text-xs font-semibold border-b border-gray-200">
                 <th className="px-3 py-2.5 text-center border-r border-gray-200 w-10">#</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Name</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Email</th>
@@ -195,10 +201,16 @@ export default function MemberPage() {
             </thead>
 
             <tbody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-4">
+                    <CyanSpinner label="Loading members..." />
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-gray-400 text-sm">
-                    {loading ? 'Loading members...' : 'No members found.'}
+                    No members found.
                   </td>
                 </tr>
               ) : (

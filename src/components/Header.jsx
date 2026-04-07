@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 import {
   listFarmers,
   listADAPendings,
@@ -29,6 +30,7 @@ const ROLE_LABELS = {
 
 export default function Header() {
   const { user } = useAuth();
+  const { notifySuccess, notifyError } = useNotification();
   const location = useLocation();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -209,8 +211,9 @@ export default function Header() {
       setMisDownloading(type);
       const rows = await fetchMisRows(type);
       downloadApplicantsCsv(labels[type], rows);
+      notifySuccess('CSV downloaded successfully');
     } catch (error) {
-      window.alert(error.message || 'CSV download failed');
+      notifyError(error.message || 'CSV download failed');
     } finally {
       setMisDownloading('');
     }
@@ -227,8 +230,9 @@ export default function Header() {
         .map(normalizeFarmer)
         .filter((app) => app.status !== 'deleted');
       downloadApplicantsCsv('sno_report', normalized);
+      notifySuccess('Report downloaded successfully');
     } catch (error) {
-      window.alert(error.message || 'Report download failed');
+      notifyError(error.message || 'Report download failed');
     } finally {
       setSnoReportDownloading(false);
     }
@@ -245,8 +249,9 @@ export default function Header() {
         .map(normalizeFarmer)
         .filter((app) => app.status !== 'deleted');
       downloadApplicantsCsv('dda_report', normalized);
+      notifySuccess('Report downloaded successfully');
     } catch (error) {
-      window.alert(error.message || 'Report download failed');
+      notifyError(error.message || 'Report download failed');
     } finally {
       setDdaReportDownloading(false);
     }
@@ -292,16 +297,16 @@ export default function Header() {
   if (user) {
     return (
       <>
-        <header className="bg-white border-b border-gray-200 shadow-sm relative z-50">
-          <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-[72px]">
+        <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm relative z-50">
+          <div className="app-content-width px-4 flex items-center justify-between h-[78px]">
             <Link to={dashboardPath}>
               <img src="/image/logo_bsb.png" alt="WB Govt" className="h-14" />
             </Link>
 
-            <nav className="hidden sm:flex items-center gap-6 text-sm font-medium text-gray-700">
+            <nav className="hidden sm:flex items-center gap-4 text-sm font-medium text-gray-700">
               <Link
                 to={dashboardPath}
-                className={`hover:text-[#0891b2] ${isExactActive(dashboardPath) ? 'text-[#0891b2] font-semibold' : ''}`}
+                className={`px-3 py-2 rounded-full hover:text-[#0891b2] hover:bg-sky-50 transition-colors ${isExactActive(dashboardPath) ? 'text-[#0891b2] font-semibold bg-sky-50' : ''}`}
               >
                 Dashboard
               </Link>
@@ -328,7 +333,7 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={() => toggleDropdown('ada')}
-                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/ada/') && !isExactActive('/portal/ada/dashboard') ? 'text-[#0891b2] font-semibold' : ''}`}
+                      className={`flex items-center gap-1 px-3 py-2 rounded-full hover:text-[#0891b2] hover:bg-sky-50 transition-colors ${isPathActive('/portal/ada/') && !isExactActive('/portal/ada/dashboard') ? 'text-[#0891b2] font-semibold bg-sky-50' : ''}`}
                     >
                       Applicant List
                       <DropdownIcon />
@@ -373,7 +378,7 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={() => toggleDropdown('member')}
-                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/ada/members') ? 'text-[#0891b2] font-semibold' : ''}`}
+                      className={`flex items-center gap-1 px-3 py-2 rounded-full hover:text-[#0891b2] hover:bg-sky-50 transition-colors ${isPathActive('/portal/ada/members') ? 'text-[#0891b2] font-semibold bg-sky-50' : ''}`}
                     >
                       Members
                       <DropdownIcon />
@@ -419,7 +424,7 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={() => toggleDropdown('snoApplicant')}
-                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/sno/approved') || isPathActive('/portal/sno/sno_approved_list') || isPathActive('/portal/sno/send_to_bank') || isPathActive('/portal/sno/rejected_list') ? 'text-[#0891b2] font-semibold' : ''}`}
+                      className={`flex items-center gap-1 px-3 py-2 rounded-full hover:text-[#0891b2] hover:bg-sky-50 transition-colors ${isPathActive('/portal/sno/approved') || isPathActive('/portal/sno/sno_approved_list') || isPathActive('/portal/sno/send_to_bank') || isPathActive('/portal/sno/rejected_list') ? 'text-[#0891b2] font-semibold bg-sky-50' : ''}`}
                     >
                       Applicant List
                       <DropdownIcon />
@@ -439,7 +444,7 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={() => toggleDropdown('snoMember')}
-                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/sno/members') ? 'text-[#0891b2] font-semibold' : ''}`}
+                      className={`flex items-center gap-1 px-3 py-2 rounded-full hover:text-[#0891b2] hover:bg-sky-50 transition-colors ${isPathActive('/portal/sno/members') ? 'text-[#0891b2] font-semibold bg-sky-50' : ''}`}
                     >
                       Members
                       <DropdownIcon />
@@ -457,7 +462,7 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={() => toggleDropdown('snoDbt')}
-                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/sno/payment_file_list') ? 'text-[#0891b2] font-semibold' : ''}`}
+                      className={`flex items-center gap-1 px-3 py-2 rounded-full hover:text-[#0891b2] hover:bg-sky-50 transition-colors ${isPathActive('/portal/sno/payment_file_list') ? 'text-[#0891b2] font-semibold bg-sky-50' : ''}`}
                     >
                       DBT
                       <DropdownIcon />
@@ -502,7 +507,7 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={() => toggleDropdown('ddaApplicant')}
-                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/dda/approved') || isPathActive('/portal/dda/send_to_bank') || isPathActive('/portal/dda/rejected_list') ? 'text-[#0891b2] font-semibold' : ''}`}
+                      className={`flex items-center gap-1 px-3 py-2 rounded-full hover:text-[#0891b2] hover:bg-sky-50 transition-colors ${isPathActive('/portal/dda/approved') || isPathActive('/portal/dda/send_to_bank') || isPathActive('/portal/dda/rejected_list') ? 'text-[#0891b2] font-semibold bg-sky-50' : ''}`}
                     >
                       Applicant List
                       <DropdownIcon />
@@ -521,7 +526,7 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={() => toggleDropdown('ddaMember')}
-                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/dda/members') ? 'text-[#0891b2] font-semibold' : ''}`}
+                      className={`flex items-center gap-1 px-3 py-2 rounded-full hover:text-[#0891b2] hover:bg-sky-50 transition-colors ${isPathActive('/portal/dda/members') ? 'text-[#0891b2] font-semibold bg-sky-50' : ''}`}
                     >
                       Members
                       <DropdownIcon />
@@ -647,7 +652,7 @@ export default function Header() {
           </div>
         )}
 
-        <div className="bg-[#1565c0] h-11 flex items-center justify-center text-white">
+        <div className="glass-banner h-11 flex items-center justify-center text-white text-sm tracking-wide">
           Welcome to {ROLE_LABELS[user.role]} Portal Agricultural Labour Scheme
         </div>
       </>
@@ -656,16 +661,16 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-white border-b shadow-sm relative z-50">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <header className="bg-white/95 backdrop-blur-sm border-b shadow-sm relative z-50">
+        <div className="app-content-width flex items-center justify-between px-4 py-3">
           <Link to="/">
             <img src="/image/logo_bsb.png" alt="Govt Logo" className="h-16 w-auto" />
           </Link>
 
           <div className="hidden sm:flex gap-2">
-            <Link to="/status" className="bg-[#00ACED] text-white px-4 py-2 rounded">Check Application</Link>
-            <button className="bg-[#00ACED] text-white px-4 py-2 rounded">New Application Form</button>
-            <button className="bg-[#00ACED] text-white px-4 py-2 rounded">Faq</button>
+            <Link to="/status" className="bg-[#00ACED] text-white px-4 py-2 rounded-sm shadow-sm hover:shadow-md transition-all">Check Application</Link>
+            <button className="bg-[#00ACED] text-white px-4 py-2 rounded-sm shadow-sm hover:shadow-md transition-all">New Application Form</button>
+            <button className="bg-[#00ACED] text-white px-4 py-2 rounded-sm shadow-sm hover:shadow-md transition-all">Faq</button>
           </div>
 
           <div className="sm:hidden">
@@ -677,14 +682,14 @@ export default function Header() {
 
         {isMenuOpen && (
           <div className="sm:hidden px-4 pb-4 flex flex-col gap-2 bg-white border-t">
-            <Link to="/status" className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">Check Application</Link>
-            <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">New Application Form</button>
-            <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">Faq</button>
+            <Link to="/status" className="bg-[#00ACED] text-center text-white px-4 py-2 rounded-full">Check Application</Link>
+            <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded-full">New Application Form</button>
+            <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded-full">Faq</button>
           </div>
         )}
       </header>
 
-      <div className="bg-[#0648b3] text-white py-2 text-center font-medium">
+      <div className="glass-banner text-white py-2.5 text-center font-medium tracking-wide">
         Welcome to Agricultural Labour Portal
       </div>
     </>

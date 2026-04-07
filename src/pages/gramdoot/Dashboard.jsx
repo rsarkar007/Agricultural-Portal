@@ -13,16 +13,16 @@ export default function GramdootDashboard() {
   const total = applicants.filter((a) => a.status !== 'deleted').length;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col">
       {/* <PortalHeader /> */}
 
-      <main className="flex-grow max-w-7xl mx-auto w-full px-3 sm:px-4 md:px-6 py-8 sm:py-10">
+      <main className="app-content-width flex-grow px-3 sm:px-4 md:px-6 py-8 sm:py-10">
 
-        <h2 className="text-sm sm:text-base font-bold text-gray-800 text-center tracking-widest mb-6">
+        <h2 className="section-title text-sm sm:text-base font-bold text-gray-800 text-center mb-6">
           DASHBOARD SUMMARY
         </h2>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-sm text-gray-700">
+        <div className="panel-card-soft px-5 py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-gray-700">
 
           <span className="font-medium text-center sm:text-left">
             Quick Registration Application Count :

@@ -357,23 +357,23 @@ const FarmerSearch = () => {
     }[s] || 'text-yellow-700 bg-yellow-50 border-yellow-300');
 
     return (
-        <div className="w-full min-h-screen bg-gray-50 p-4 sm:p-8 md:p-12">
-            <div className="max-w-5xl mx-auto bg-white shadow-sm rounded-lg p-6 md:p-10">
+        <div className="w-full min-h-screen px-4 py-6 sm:px-6 sm:py-10 md:px-8">
+            <div className="max-w-5xl mx-auto panel-card p-6 md:p-10">
 
-                <header className="mb-6 md:mb-10">
+                <header className="mb-6 md:mb-10 pb-5 border-b border-slate-200">
                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-light text-[#333] tracking-tight uppercase">
                         Farmer Search
                     </h1>
                 </header>
 
-                <form onSubmit={handleSearch} className="flex flex-col gap-4">
+                <form onSubmit={handleSearch} className="panel-card-soft p-4 sm:p-5 flex flex-col gap-4">
                     <div className="w-full">
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Search by Acknowledgement No / Aadhaar / Mobile"
-                            className="w-full px-4 py-3 text-sm sm:text-base border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 font-light"
+                            className="field-input placeholder-gray-400 font-light"
                         />
                     </div>
 
@@ -381,7 +381,7 @@ const FarmerSearch = () => {
                         <button
                             type="submit"
                             disabled={loading || !searchTerm.trim()}
-                            className="w-full sm:w-auto px-8 py-2.5 bg-[#337ab7] hover:bg-[#286090] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded shadow-sm transition-colors duration-200 text-sm sm:text-base"
+                            className="w-full sm:w-auto px-8 py-3 bg-[#337ab7] hover:bg-[#286090] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl shadow-sm transition-colors duration-200 text-sm sm:text-base"
                         >
                             {loading ? 'Searching…' : 'Search'}
                         </button>
@@ -390,7 +390,7 @@ const FarmerSearch = () => {
 
                 {/* Error */}
                 {error && (
-                    <div className="mt-6 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded">
+                    <div className="mt-6 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
                         {error}
                     </div>
                 )}
@@ -404,10 +404,10 @@ const FarmerSearch = () => {
 
                 {/* Results table */}
                 {results && results.length > 0 && (
-                    <div className="mt-8 overflow-x-auto border border-gray-200 rounded">
+                    <div className="table-shell mt-8 overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="bg-gray-100 text-gray-700 text-xs uppercase tracking-wide">
+                                <tr className="text-gray-700 text-xs uppercase tracking-wide">
                                     <th className="px-4 py-2.5 text-left">#</th>
                                     <th className="px-4 py-2.5 text-left">Ack ID</th>
                                     <th className="px-4 py-2.5 text-left">Name</th>
@@ -418,7 +418,7 @@ const FarmerSearch = () => {
                             </thead>
                             <tbody>
                                 {results.map((r, i) => (
-                                    <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50">
+                                    <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
                                         <td className="px-4 py-2 text-gray-500">{i + 1}</td>
                                         <td className="px-4 py-2 font-mono text-xs text-[#0891b2]">{r.ackId || '—'}</td>
                                         <td className="px-4 py-2 text-gray-800">{r.name || '—'}</td>

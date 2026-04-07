@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { createAgent } from "../../api/client";
 import { useDataDirs } from "../../context/DataDirsContext";
+import { useNotification } from "../../context/NotificationContext";
 
 export default function NewMember() {
+    const { notifySuccess, notifyError } = useNotification();
     const location = useLocation();
     const isAdminMemberPage =
         location.pathname.startsWith("/portal/sno/") ||
@@ -193,7 +195,7 @@ export default function NewMember() {
             });
 
             console.log("SUCCESS:", result);
-            alert("Member registered successfully!");
+            notifySuccess("Member created successfully");
 
             setFormData({
                 email: "",
@@ -211,7 +213,7 @@ export default function NewMember() {
             setErrors({});
         } catch (err) {
             console.error("FULL ERROR:", err);
-            alert("Failed: " + err.message);
+            notifyError(err.message || "Member creation failed");
         } finally {
             setLoading(false);
         }

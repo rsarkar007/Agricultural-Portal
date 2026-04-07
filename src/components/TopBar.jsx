@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '../context/NotificationContext';
 
 const ROLE_HOME = {
   gramdoot: '/portal/dashboard',
@@ -13,6 +14,7 @@ const ROLE_LABELS = { gramdoot: 'Gramdoot', ada: 'ADA', dda: 'DDA', sno: 'SNO', 
 
 export default function TopBar() {
   const { user, login, logout } = useAuth();
+  const { notifySuccess, notifyError } = useNotification();
   const navigate = useNavigate();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -39,34 +41,39 @@ export default function TopBar() {
       if (result.success) {
         setIsLoginModalOpen(false);
         setEmail(''); setPassword('');
-        sessionStorage.setItem('km_just_logged_in', '1');
+        notifySuccess('Login successful');
         navigate(ROLE_HOME[result.user.role] || '/');
       } else {
-        setError(result.message || 'Invalid credentials or OTP.');
+        const message = result.message || 'Invalid credentials or OTP.';
+        setError(message);
+        notifyError(message);
       }
     } catch (err) {
-      setError(err.message || 'Login failed');
+      const message = err.message || 'Login failed';
+      setError(message);
+      notifyError(message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setUserMenuOpen(false);
+    notifySuccess('Logout successful');
     navigate('/');
   };
 
   return (
     <>
-      <div className="w-full bg-[#f8f8f8] py-1 border-b border-gray-200 relative z-60">
-        <div className="w-full max-w-[1280px] mx-auto flex justify-end px-4 py-1">
+      <div className="w-full bg-[#f8f8f8]/95 backdrop-blur-sm py-1.5 border-b border-gray-200/80 relative z-60">
+        <div className="app-content-width flex justify-end px-4">
           {user ? (
             /* ── Logged-in: user email + logout dropdown ── */
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2.5 text-sm font-medium text-slate-700 bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-full pl-2 pr-4 py-1.5 shadow-sm hover:shadow-md hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 group cursor-pointer"
+                className="flex items-center gap-2.5 text-sm font-medium text-slate-700 bg-white/90 backdrop-blur-md border border-slate-200/70 rounded-full pl-2 pr-4 py-1.5 shadow-sm hover:shadow-md hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 group cursor-pointer"
               >
                 <div className="w-7 h-7 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-inner group-hover:scale-105 transition-transform duration-300">
                   <span className="text-xs font-bold">{user.email.charAt(0).toUpperCase()}</span>
@@ -125,15 +132,15 @@ export default function TopBar() {
 
       {/* ── Login Modal ── */}
       {isLoginModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-100 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden relative">
+          <div className="fixed inset-0 bg-slate-900/55 flex items-center justify-center z-100 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative border border-white/60">
             <button
               onClick={() => setIsLoginModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-2xl z-10 font-light cursor-pointer"
             >
               &times;
             </button>
-            <div className="bg-[#dcf4ff] py-6 flex flex-col items-center border-b border-blue-100">
+            <div className="bg-[#dcf4ff] py-7 flex flex-col items-center border-b border-blue-100">
               <img src="/image/logo_bsb.png" alt="Logo" className="h-16 mb-2" />
             </div>
             <div className="p-8">
@@ -152,7 +159,7 @@ export default function TopBar() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full border border-gray-300 px-3 py-2.5 rounded focus:outline-none focus:ring-2 focus:ring-[#2B78E4] text-sm"
+                    className="w-full border border-gray-300 px-3 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2B78E4] text-sm"
                   />
                 </div>
                 <div>
@@ -162,7 +169,7 @@ export default function TopBar() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full border border-gray-300 px-3 py-2.5 rounded focus:outline-none focus:ring-2 focus:ring-[#2B78E4] text-sm"
+                    className="w-full border border-gray-300 px-3 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2B78E4] text-sm"
                   />
                 </div>
                 <div className="flex items-center mt-2">
@@ -174,7 +181,7 @@ export default function TopBar() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-[#2B78E4] text-white font-bold py-3 rounded hover:bg-blue-600 w-full transition shadow-md text-sm uppercase tracking-wide disabled:opacity-50 mt-2"
+                  className="bg-[#2B78E4] text-white font-bold py-3 rounded-xl hover:bg-blue-600 w-full transition shadow-md text-sm uppercase tracking-wide disabled:opacity-50 mt-2"
                 >
                   {isSubmitting ? 'Logging In...' : 'Log In'}
                 </button>

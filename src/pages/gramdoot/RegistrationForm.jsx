@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApplicants } from '../../context/ApplicantContext';
 import { useDataDirs } from '../../context/DataDirsContext';
+import { useNotification } from '../../context/NotificationContext';
 
 export default function RegistrationForm() {
+  const { notifySuccess, notifyError } = useNotification();
   const { user } = useAuth();
   const { addApplicant } = useApplicants();
   const { blockName, districtName, loadDistricts, loadBlocksByDistrict } = useDataDirs();
@@ -60,10 +62,14 @@ export default function RegistrationForm() {
     setSubmitting(true);
     try {
       const newEntry = await addApplicant(form, user);
-      setSuccess(`Application submitted! Acknowledgement ID: ${newEntry.ackId}`);
+      const message = `Application submitted successfully. Acknowledgement ID: ${newEntry.ackId}`;
+      setSuccess(message);
+      notifySuccess(message);
       setForm({ name: '', aadhaar: '', mobile: '' });
     } catch (err) {
-      setErrors({ _form: err.message || 'Submission failed. Please try again.' });
+      const message = err.message || 'Submission failed. Please try again.';
+      setErrors({ _form: message });
+      notifyError(message);
     } finally {
       setSubmitting(false);
     }

@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApplicants } from '../../context/ApplicantContext';
+import CyanSpinner from '../../components/CyanSpinner';
 
 export default function SentToBankList() {
   const navigate = useNavigate();
-  const { applicants, loadADASentToBank, sentToBankMeta } = useApplicants();
+  const { applicants, loadADASentToBank, loadingFarmers, sentToBankMeta } = useApplicants();
 
   const [ackInput, setAckInput] = useState('');
   const [nameInput, setNameInput] = useState('');
@@ -68,30 +69,30 @@ export default function SentToBankList() {
 
   return (
     <main className="grow w-full px-4 py-8">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-base font-bold text-gray-700 tracking-widest uppercase mb-4">
+      <div className="app-content-width">
+        <h2 className="section-title text-base font-bold text-gray-700 uppercase mb-4">
           Send to Bank Search Application
         </h2>
 
         <div className="mb-6">
-          <div className="flex flex-wrap gap-3 items-end">
-            <FilterInput label="Acknowledgement ID" value={ackInput} onChange={setAckInput} />
-            <FilterInput label="Applicant Name" value={nameInput} onChange={setNameInput} />
-            <FilterInput label="Aadhar No" value={aadhaarInput} onChange={setAadhaarInput} narrow />
-            <FilterInput label="Mobile No" value={mobileInput} onChange={setMobileInput} narrow />
+          <div className="panel-card-soft flex flex-wrap gap-3 items-end p-4">
+            <SearchInput label="Acknowledgement ID" value={ackInput} onChange={setAckInput} />
+            <SearchInput label="Applicant Name" value={nameInput} onChange={setNameInput} />
+            <SearchInput label="Aadhar No" value={aadhaarInput} onChange={setAadhaarInput} narrow />
+            <SearchInput label="Mobile No" value={mobileInput} onChange={setMobileInput} narrow />
 
             <div className="flex gap-2 pb-0.5">
               <button
                 type="button"
                 onClick={handleSearch}
-                className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-1.5 rounded transition-colors"
+                className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
               >
                 Search
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-1.5 rounded transition-colors"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
               >
                 Reset
               </button>
@@ -112,12 +113,12 @@ export default function SentToBankList() {
           </button>
         </div>
 
-        <div className="overflow-x-auto border border-gray-200 rounded">
+        <div className="table-shell overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="bg-gray-50 text-gray-700 text-xs font-semibold border-b border-gray-200">
+              <tr className="text-gray-700 text-xs font-semibold border-b border-gray-200">
                 <th className="px-3 py-2.5 text-center border-r border-gray-200 w-10">#</th>
-                <th className="px-3 py-2.5 text-center border-r border-gray-200">Acknowledgement ID</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Ack ID</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Applicant Name</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Aadhaar No</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Mobile No</th>
@@ -125,13 +126,19 @@ export default function SentToBankList() {
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Branch Name</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">Account Number</th>
                 <th className="px-3 py-2.5 text-center border-r border-gray-200">IFSC</th>
-                <th className="px-3 py-2.5 text-center border-r border-gray-200">Present in KB(N)</th>
-                <th className="px-3 py-2.5 text-center border-r border-gray-200">Applied for Yuvasathi</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">KB(N)</th>
+                <th className="px-3 py-2.5 text-center border-r border-gray-200">Yuvasathi</th>
                 <th className="px-3 py-2.5 text-center">Action</th>
               </tr>
             </thead>
             <tbody>
-              {list.length === 0 ? (
+              {loadingFarmers ? (
+                <tr>
+                  <td colSpan={12} className="py-4">
+                    <CyanSpinner label="Loading records..." />
+                  </td>
+                </tr>
+              ) : list.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="text-center py-10 text-gray-400 text-sm">
                     No applications found.
@@ -212,27 +219,35 @@ export default function SentToBankList() {
   );
 }
 
-function FilterInput({ label, value, onChange, narrow = false }) {
+function SearchInput({ label, value, onChange, narrow = false }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs text-gray-600">{label}</label>
       <input
-        type="text"
         value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className={`border border-gray-300 rounded px-3 py-1.5 text-sm ${narrow ? 'w-40' : 'w-52'} focus:outline-none focus:border-[#3eb0c9]`}
+        onChange={(e) => onChange(e.target.value)}
+        className={`field-input !rounded-xl !px-3 !py-2 text-sm ${narrow ? 'w-40' : 'w-52'}`}
       />
     </div>
   );
 }
 
-function ActionBtn({ onClick, title, children }) {
+function ActionBtn({ color = 'cyan', title, onClick, children, disabled = false }) {
+  const colorMap = {
+    cyan: 'bg-[#3eb0c9] hover:bg-[#2a9ab0]',
+    green: 'bg-green-600 hover:bg-green-700',
+    orange: 'bg-orange-500 hover:bg-orange-600',
+    blue: 'bg-blue-600 hover:bg-blue-700',
+    red: 'bg-red-600 hover:bg-red-700',
+  };
+
   return (
     <button
       type="button"
       title={title}
       onClick={onClick}
-      className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white p-1.5 rounded transition-colors"
+      disabled={disabled}
+      className={`${colorMap[color]} text-white p-1.5 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed`}
     >
       {children}
     </button>
