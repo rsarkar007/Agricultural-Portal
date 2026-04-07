@@ -39,7 +39,7 @@ export default function Home() {
     return (
         <div className="flex flex-col items-center w-full">
             {/* Main Banner Slider */}
-            <div className="w-full mx-auto relative overflow-hidden group bg-white border-b">
+            <div className="w-full mx-auto relative overflow-hidden group bg-white border-b border-slate-200 shadow-[0_20px_45px_-35px_rgba(6,72,179,0.45)]">
                 {/* Structural invisible image to create responsive height matching the real aspect ratio */}
                 <img src={bannerImages[0]} alt="" className="w-full h-auto opacity-0 pointer-events-none block" />
 
@@ -82,13 +82,13 @@ export default function Home() {
             </div>
 
             <div className="w-full bg-[#f9f9f9]">
-                <div className="w-full max-w-[1280px] mx-auto px-4 py-8">
+                <div className="app-content-width px-4 py-10">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                         {featureCards.map(card => (
                             <div
                                 key={card.id}
                                 onClick={() => navigate(card.link)}
-                                className="bg-[#fafafa] px-2.5 py-10 rounded-lg border border-[#f1f1f1] shadow-lg cursor-pointer transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center text-center group bg-white"
+                                className="panel-card-soft px-4 py-10 cursor-pointer transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col items-center text-center group"
                             >
                                 <div className="mb-4 transition-transform duration-300 group-hover:scale-110">
                                     <img src={card.icon} alt={`${card.title} Icon`} className="w-16 h-16 object-contain" loading="lazy" width="64" height="64" />
@@ -102,17 +102,19 @@ export default function Home() {
                 </div>
             </div>
 
-            <div className="w-full bg-white py-8 border-t flex justify-center">
-                <img src="/image/footer_top_bg.png" alt="Footer Top Decorative Element" className="max-w-[1280px] w-full h-auto object-contain" loading="lazy" />
+            <div className="w-full bg-white py-10 border-t border-slate-200 flex justify-center">
+                <img src="/image/footer_top_bg.png" alt="Footer Top Decorative Element" className="app-content-width w-full h-auto object-contain px-4" loading="lazy" />
             </div>
 
             {/* Client Logos */}
-            <div className="w-full bg-white pb-8">
-                <div className="container mx-auto flex justify-center items-center gap-8 flex-wrap">
+            <div className="w-full bg-white pb-10">
+                <div className="app-content-width px-4">
+                    <div className="panel-card-soft px-6 py-6 flex justify-center items-center gap-8 flex-wrap">
                     <img src="/image/wbswan.jpg" alt="WBSWAN Logo" className="h-12 w-auto object-contain" loading="lazy" width="auto" height="48" />
                     <img src="/image/westbengal_tourism_logo.jpg" alt="West Bengal Tourism Logo" className="h-12 w-auto object-contain" loading="lazy" width="auto" height="48" />
                     <img src="/image/westbengal_map_logo.jpg" alt="West Bengal Map Logo" className="h-12 w-auto object-contain" loading="lazy" width="auto" height="48" />
                     <img src="/image/indiagovin_mp.jpg" alt="India Gov Logo" className="h-12 w-auto object-contain" loading="lazy" width="auto" height="48" />
+                    </div>
                 </div>
             </div>
         </div>

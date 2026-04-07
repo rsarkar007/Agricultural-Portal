@@ -1,18 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApplicants } from '../../context/ApplicantContext';
-
+import { useNotification } from '../../context/NotificationContext';
 
 export default function BankDashboard() {
+  const { notifySuccess, notifyError } = useNotification();
   const { user } = useAuth();
   const { applicants, markProcessed, loadFarmers } = useApplicants();
   const [viewRecord, setViewRecord] = useState(null);
   const [actionError, setActionError] = useState('');
 
-  useEffect(() => { loadFarmers(); }, []);
+  useEffect(() => {
+    loadFarmers();
+  }, [loadFarmers]);
 
-  // Bank sees only sent_to_bank and processed
-  const list = applicants.filter((a) => a.status === 'sent_to_bank' || a.status === 'processed');
+  const list = applicants.filter((applicant) => applicant.status === 'sent_to_bank' || applicant.status === 'processed');
+
+  const handleMarkProcessed = async (id) => {
+    try {
+      setActionError('');
+      await markProcessed(id);
+      notifySuccess('DBT marked as processed successfully');
+    } catch (error) {
+      const message = error.message || 'Failed to mark as processed';
+      setActionError(message);
+      notifyError(message);
+    }
+  };
 
   return (
     <>
@@ -33,11 +47,11 @@ export default function BankDashboard() {
 
         <div className="grid grid-cols-2 gap-4 mb-8 max-w-xs">
           <div className="border-l-4 border-blue-500 text-blue-700 bg-white shadow-sm rounded p-4">
-            <div className="text-2xl font-bold">{list.filter(a => a.status === 'sent_to_bank').length}</div>
+            <div className="text-2xl font-bold">{list.filter((applicant) => applicant.status === 'sent_to_bank').length}</div>
             <div className="text-xs text-gray-500 mt-1">Pending DBT</div>
           </div>
           <div className="border-l-4 border-purple-500 text-purple-700 bg-white shadow-sm rounded p-4">
-            <div className="text-2xl font-bold">{list.filter(a => a.status === 'processed').length}</div>
+            <div className="text-2xl font-bold">{list.filter((applicant) => applicant.status === 'processed').length}</div>
             <div className="text-xs text-gray-500 mt-1">DBT Processed</div>
           </div>
         </div>
@@ -57,7 +71,9 @@ export default function BankDashboard() {
             </thead>
             <tbody>
               {list.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-400">No applications received from SNO yet.</td></tr>
+                <tr>
+                  <td colSpan={7} className="text-center py-8 text-gray-400">No applications received from SNO yet.</td>
+                </tr>
               ) : list.map((row, idx) => (
                 <tr key={row.id} className="border-t border-gray-100 hover:bg-gray-50">
                   <td className="px-3 py-2 text-center text-gray-500 text-xs">{idx + 1}</td>
@@ -74,14 +90,20 @@ export default function BankDashboard() {
                   </td>
                   <td className="px-3 py-2 text-center">
                     <div className="flex items-center justify-center gap-1.5">
-                      <button onClick={() => setViewRecord(row)} title="View"
-                        className="bg-[#0891b2] hover:bg-[#0e7490] text-white p-1.5 rounded">
+                      <button
+                        onClick={() => setViewRecord(row)}
+                        title="View"
+                        className="bg-[#0891b2] hover:bg-[#0e7490] text-white p-1.5 rounded"
+                      >
                         <EyeIcon />
                       </button>
                       {row.status === 'sent_to_bank' && (
-                        <button onClick={async () => { try { await markProcessed(row.id); } catch(e) { setActionError(e.message || 'Failed to mark as processed'); } }} title="Mark DBT Processed"
-                          className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-2.5 py-1.5 rounded whitespace-nowrap">
-                          ✓ DBT Done
+                        <button
+                          onClick={() => handleMarkProcessed(row.id)}
+                          title="Mark DBT Processed"
+                          className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-2.5 py-1.5 rounded whitespace-nowrap"
+                        >
+                          DBT Done
                         </button>
                       )}
                     </div>
@@ -101,10 +123,10 @@ export default function BankDashboard() {
               <button onClick={() => setViewRecord(null)} className="text-gray-400 hover:text-gray-700 text-xl">&times;</button>
             </div>
             <div className="px-5 py-4 space-y-3 text-sm">
-              {[['Ack ID', viewRecord.ackId], ['Name', viewRecord.name], ['Aadhaar', viewRecord.aadhaar], ['Mobile', viewRecord.mobile], ['Status', viewRecord.status.replace('_', ' ')]].map(([l, v]) => (
-                <div key={l} className="flex gap-3">
-                  <span className="text-gray-500 w-24 shrink-0 font-medium">{l}</span>
-                  <span className="text-gray-800 font-mono">{v}</span>
+              {[['Ack ID', viewRecord.ackId], ['Name', viewRecord.name], ['Aadhaar', viewRecord.aadhaar], ['Mobile', viewRecord.mobile], ['Status', viewRecord.status.replace('_', ' ')]].map(([label, value]) => (
+                <div key={label} className="flex gap-3">
+                  <span className="text-gray-500 w-24 shrink-0 font-medium">{label}</span>
+                  <span className="text-gray-800 font-mono">{value}</span>
                 </div>
               ))}
             </div>

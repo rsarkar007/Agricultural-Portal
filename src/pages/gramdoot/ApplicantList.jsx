@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApplicants } from '../../context/ApplicantContext';
+import CyanSpinner from '../../components/CyanSpinner';
 
 const PAGE_SIZE = 20;
 
@@ -61,12 +62,12 @@ export default function ApplicantList() {
   };
 
   return (
-    <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-8">
-      <h2 className="text-sm font-bold text-gray-800 tracking-widest mb-4">
+    <main className="app-content-width flex-grow px-4 py-8">
+      <h2 className="section-title text-sm font-bold text-gray-800 mb-4">
         SEARCH REGISTERED APPLICANT
       </h2>
 
-      <div className="flex flex-wrap items-end gap-3 mb-6">
+      <div className="panel-card-soft flex flex-wrap items-end gap-3 mb-6 p-4">
         {[
           { key: 'ackId', label: 'Acknowledgement ID' },
           { key: 'name', label: 'Applicant Name' },
@@ -80,35 +81,38 @@ export default function ApplicantList() {
               value={search[key]}
               onChange={(e) => setSearch({ ...search, [key]: e.target.value })}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="border border-gray-300 rounded px-3 py-1.5 text-sm w-44 focus:outline-none focus:border-[#0891b2] focus:ring-1 focus:ring-[#0891b2]"
+              className="field-input !rounded-xl !px-3 !py-2 text-sm w-44"
             />
           </div>
         ))}
         <div className="flex gap-2 pb-0.5">
           <button
             onClick={handleSearch}
-            className="bg-[#1565c0] hover:bg-[#1253a0] text-white text-sm font-medium px-5 py-2 rounded transition-colors"
+            className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
           >
             Search
           </button>
           <button
             onClick={handleReset}
-            className="bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium px-5 py-2 rounded transition-colors"
+            className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
           >
             Reset
-          </button>
-          <button
-            onClick={loadFarmers}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium px-5 py-2 rounded transition-colors"
-          >
-            Refresh List
           </button>
         </div>
       </div>
 
-      <h3 className="text-[#0891b2] font-semibold text-sm mb-3">
-        Registered Applicant List: {farmersMeta.serverCount}
-      </h3>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[#0891b2] font-bold text-sm">
+          Registered Applicant List ({farmersMeta.serverCount})
+        </p>
+        <button
+          type="button"
+          onClick={loadFarmers}
+          className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-xs font-medium px-4 py-1.5 rounded transition-colors"
+        >
+          Refresh
+        </button>
+      </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-3 text-xs">
         {/* <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
@@ -141,36 +145,42 @@ export default function ApplicantList() {
         </div>
       )} */}
 
-      <div className="overflow-x-auto border border-gray-200 rounded">
+      <div className="table-shell overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-200 text-gray-700 text-xs uppercase tracking-wide">
-              <th className="px-3 py-2.5 text-center w-10">#</th>
-              <th className="px-3 py-2.5 text-center">Acknowledgement ID</th>
-              <th className="px-3 py-2.5 text-center">Applicant Name</th>
-              <th className="px-3 py-2.5 text-center">Aadhaar No</th>
-              <th className="px-3 py-2.5 text-center">Mobile No</th>
-              <th className="px-3 py-2.5 text-center">Status</th>
+            <tr className="text-gray-700 text-xs font-semibold border-b border-gray-200">
+              <th className="px-3 py-2.5 text-center border-r border-gray-200 w-10">#</th>
+              <th className="px-3 py-2.5 text-center border-r border-gray-200">Ack ID</th>
+              <th className="px-3 py-2.5 text-center border-r border-gray-200">Applicant Name</th>
+              <th className="px-3 py-2.5 text-center border-r border-gray-200">Aadhaar No</th>
+              <th className="px-3 py-2.5 text-center border-r border-gray-200">Mobile No</th>
+              <th className="px-3 py-2.5 text-center border-r border-gray-200">Status</th>
               <th className="px-3 py-2.5 text-center">Action</th>
             </tr>
           </thead>
-          <tbody>
-            {paginated.length === 0 ? (
+            <tbody>
+            {loadingFarmers ? (
+              <tr>
+                <td colSpan={7} className="py-4">
+                  <CyanSpinner label="Loading records..." />
+                </td>
+              </tr>
+            ) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={7} className="text-center py-8 text-gray-400 text-sm">
-                  {loadingFarmers ? 'Loading records...' : 'No records found.'}
+                  No records found.
                 </td>
               </tr>
             ) : (
               paginated.map((row, idx) => (
                 <tr
                   key={row.id}
-                  className="border-t border-gray-100 hover:bg-gray-50 transition-colors"
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
-                  <td className="px-3 py-2 text-center text-gray-600">
+                  <td className="px-3 py-2 text-center text-gray-500 border-r border-gray-100 text-xs">
                     {(page - 1) * PAGE_SIZE + idx + 1}
                   </td>
-                  <td className="px-3 py-2 text-center">
+                  <td className="px-3 py-2 text-center font-mono text-xs text-[#0891b2] border-r border-gray-100">
                     <button
                       onClick={() => navigate(`/portal/registration/${row.id}/view`)}
                       className="text-[#0891b2] hover:underline font-mono text-xs"
@@ -178,19 +188,19 @@ export default function ApplicantList() {
                       {row.ackId || '-'}
                     </button>
                   </td>
-                  <td className="px-3 py-2 text-center text-gray-700">{row.name || '-'}</td>
-                  <td className="px-3 py-2 text-center text-gray-600 font-mono text-xs">{row.aadhaar || '-'}</td>
-                  <td className="px-3 py-2 text-center text-gray-600 font-mono text-xs">{row.mobile || '-'}</td>
-                  <td className="px-3 py-2 text-center">
+                  <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{row.name || '-'}</td>
+                  <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{row.aadhaar || '-'}</td>
+                  <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{row.mobile || '-'}</td>
+                  <td className="px-3 py-2 text-center border-r border-gray-100">
                     <StatusBadge status={row.status} />
                   </td>
                   <td className="px-3 py-2 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
+                    <div className="flex items-center justify-center gap-1">
                       {(row.status === 'pending' || row.status === 'rejected') && (
                         <button
                           onClick={() => navigate(`/portal/registration/${row.id}/edit`)}
                           title="Edit Application"
-                          className="bg-[#0891b2] hover:bg-[#0e7490] text-white p-1.5 rounded transition-colors"
+                          className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white p-1.5 rounded-xl transition-colors"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -200,7 +210,7 @@ export default function ApplicantList() {
                       <button
                         onClick={() => navigate(`/portal/registration/${row.id}/view`)}
                         title="View Application"
-                        className="bg-[#0891b2] hover:bg-[#0e7490] text-white p-1.5 rounded transition-colors"
+                        className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white p-1.5 rounded-xl transition-colors"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -236,7 +246,7 @@ export default function ApplicantList() {
                 key={p}
                 onClick={() => goPage(p)}
                 className={`px-2.5 py-1 text-xs border rounded transition-colors ${p === page
-                  ? 'bg-[#1565c0] text-white border-[#1565c0]'
+                  ? 'bg-[#3eb0c9] text-white border-[#3eb0c9]'
                   : 'border-gray-300 hover:bg-gray-100'
                   }`}
               >

@@ -1,59 +1,57 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApplicants } from '../../context/ApplicantContext';
 import { useDataDirs } from '../../context/DataDirsContext';
-
 
 export default function ADADashboard() {
   const navigate = useNavigate();
   const { applicants, loadFarmers } = useApplicants();
   const { gpName } = useDataDirs();
 
-  // Pull latest data from server on mount
-  useEffect(() => { loadFarmers(); }, []);
+  useEffect(() => {
+    loadFarmers();
+  }, [loadFarmers]);
 
-  // Flash message — shown once right after login
-  const [showWelcome] = useState(() => {
-    const flag = sessionStorage.getItem('km_just_logged_in');
-    if (flag) { sessionStorage.removeItem('km_just_logged_in'); return true; }
-    return false;
-  });
-
-  // All non-deleted apps
   const visible = useMemo(
-    () => applicants.filter((a) => a.status !== 'deleted'),
+    () => applicants.filter((applicant) => applicant.status !== 'deleted'),
     [applicants]
   );
 
-  // Group by Gram Panchayat ID (key = numeric id string, display via gpName)
   const gpRows = useMemo(() => {
-    const map = {};
-    visible.forEach((a) => {
-      const gpId = a.fullForm?.gramPanchayat || '';
-      const key = gpId || '—';
-      if (!map[key]) map[key] = { total: 0, approved: 0, rejected: 0, pending: 0 };
-      map[key].total++;
-      if (a.status === 'approved' || a.status === 'sent_to_bank' || a.status === 'processed') {
-        map[key].approved++;
-      } else if (a.status === 'rejected') {
-        map[key].rejected++;
+    const grouped = {};
+
+    visible.forEach((applicant) => {
+      const gpId = applicant.fullForm?.gramPanchayat || '';
+      const key = gpId || '-';
+
+      if (!grouped[key]) {
+        grouped[key] = { total: 0, approved: 0, rejected: 0, pending: 0 };
+      }
+
+      grouped[key].total += 1;
+
+      if (['approved', 'sent_to_bank', 'processed'].includes(applicant.status)) {
+        grouped[key].approved += 1;
+      } else if (applicant.status === 'rejected') {
+        grouped[key].rejected += 1;
       } else {
-        map[key].pending++;
+        grouped[key].pending += 1;
       }
     });
-    return Object.entries(map).sort(([a], [b]) => {
-      const nameA = gpName(a) || a;
-      const nameB = gpName(b) || b;
-      return nameA.localeCompare(nameB);
+
+    return Object.entries(grouped).sort(([left], [right]) => {
+      const leftName = gpName(left) || left;
+      const rightName = gpName(right) || right;
+      return leftName.localeCompare(rightName);
     });
   }, [visible, gpName]);
 
   const totals = gpRows.reduce(
-    (acc, [, v]) => ({
-      total: acc.total + v.total,
-      approved: acc.approved + v.approved,
-      rejected: acc.rejected + v.rejected,
-      pending: acc.pending + v.pending,
+    (accumulator, [, value]) => ({
+      total: accumulator.total + value.total,
+      approved: accumulator.approved + value.approved,
+      rejected: accumulator.rejected + value.rejected,
+      pending: accumulator.pending + value.pending,
     }),
     { total: 0, approved: 0, rejected: 0, pending: 0 }
   );
@@ -61,38 +59,29 @@ export default function ADADashboard() {
   const downloadCSV = () => {
     const header = 'Sl No,Gram Panchayat,Total Submitted,Approved,Rejected,Pending\n';
     const rows = gpRows
-      .map(([gpId, v], i) => `${i + 1},"${gpName(gpId) || gpId}",${v.total},${v.approved},${v.rejected},${v.pending}`)
+      .map(([gpId, value], index) => `${index + 1},"${gpName(gpId) || gpId}",${value.total},${value.approved},${value.rejected},${value.pending}`)
       .join('\n');
     const total = `Total,,${totals.total},${totals.approved},${totals.rejected},${totals.pending}`;
     const blob = new Blob([header + rows + '\n' + total], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'ada_dashboard_summary.csv';
-    a.click();
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'ada_dashboard_summary.csv';
+    anchor.click();
     URL.revokeObjectURL(url);
   };
 
   return (
     <main className="grow w-full px-0 py-0">
-      {/* Signed in banner */}
-      {showWelcome && (
-        <div className="w-full bg-[#d9edf7] border-b border-[#bcdff1] px-6 py-3 text-[#31708f] text-sm font-medium">
-          Signed in successfully.
-        </div>
-      )}
-
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Title */}
-        <h2 className="text-sm font-bold text-gray-800 text-center tracking-widest mb-6 uppercase">
+      <div className="app-content-width px-4 py-8">
+        <h2 className="section-title text-sm font-bold text-gray-800 text-center mb-6 uppercase">
           Dashboard Summary
         </h2>
 
-        {/* Top bar: Download CSV (left) + count (right) */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="panel-card-soft px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
           <button
             onClick={downloadCSV}
-            className="bg-[#4caf50] hover:bg-[#388e3c] text-white text-xs font-semibold px-4 py-2 rounded transition-colors"
+            className="bg-[#4caf50] hover:bg-[#388e3c] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors"
           >
             Download CSV
           </button>
@@ -104,11 +93,10 @@ export default function ADADashboard() {
           </div>
         </div>
 
-        {/* GP Summary Table */}
-        <div className="overflow-x-auto border border-gray-200">
+        <div className="table-shell overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="bg-gray-100 text-gray-700 text-xs font-semibold border-b border-gray-300">
+              <tr className="text-gray-700 text-xs font-semibold border-b border-gray-300">
                 <th className="px-4 py-2.5 text-center border-r border-gray-200 w-16">Sl No</th>
                 <th className="px-4 py-2.5 text-center border-r border-gray-200">Gram Panchayat</th>
                 <th className="px-4 py-2.5 text-center border-r border-gray-200">Total Submitted Application</th>
@@ -125,28 +113,27 @@ export default function ADADashboard() {
                   </td>
                 </tr>
               ) : (
-                gpRows.map(([gp, v], idx) => (
+                gpRows.map(([gpId, value], index) => (
                   <tr
-                    key={gp}
-                    className={`border-b border-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}
+                    key={gpId}
+                    className={`border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}
                   >
-                    <td className="px-4 py-2 text-center text-gray-500 border-r border-gray-100">{idx + 1}</td>
+                    <td className="px-4 py-2 text-center text-gray-500 border-r border-gray-100">{index + 1}</td>
                     <td className="px-4 py-2 text-center border-r border-gray-100">
                       <button
-                        onClick={() => navigate(`/portal/ada/applications?gp=${encodeURIComponent(gp)}`)}
+                        onClick={() => navigate(`/portal/ada/applications?gp=${encodeURIComponent(gpId)}`)}
                         className="text-[#0891b2] hover:underline font-medium"
                       >
-                        {gpName(gp) || gp}
+                        {gpName(gpId) || gpId}
                       </button>
                     </td>
-                    <td className="px-4 py-2 text-center text-gray-600 border-r border-gray-100">{v.total}</td>
-                    <td className="px-4 py-2 text-center text-gray-600 border-r border-gray-100">{v.approved}</td>
-                    <td className="px-4 py-2 text-center text-gray-600 border-r border-gray-100">{v.rejected}</td>
-                    <td className="px-4 py-2 text-center text-gray-600">{v.pending}</td>
+                    <td className="px-4 py-2 text-center text-gray-600 border-r border-gray-100">{value.total}</td>
+                    <td className="px-4 py-2 text-center text-gray-600 border-r border-gray-100">{value.approved}</td>
+                    <td className="px-4 py-2 text-center text-gray-600 border-r border-gray-100">{value.rejected}</td>
+                    <td className="px-4 py-2 text-center text-gray-600">{value.pending}</td>
                   </tr>
                 ))
               )}
-              {/* Total row */}
               {gpRows.length > 0 && (
                 <tr className="bg-gray-100 font-semibold text-gray-700 border-t-2 border-gray-300">
                   <td className="px-4 py-2 text-center border-r border-gray-200" colSpan={2}>Total</td>

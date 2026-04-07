@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ApplicantProvider } from './context/ApplicantContext';
 import { DataDirsProvider } from './context/DataDirsContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 //  Shared layout components 
 import TopBar from './components/TopBar';
@@ -52,11 +53,11 @@ function AppLayout({ children, wrapMain = true }) {
   const location = useLocation();
   const isHome = location.pathname === '/';
   return (
-    <div className="min-h-screen flex flex-col font-roboto text-[15px] bg-white relative overflow-x-hidden">
+    <div className="app-shell min-h-screen flex flex-col font-roboto text-[15px] relative overflow-x-hidden">
       <TopBar />
       <Header />
       {wrapMain ? (
-        <main className="grow flex flex-col items-center w-full bg-white">{children}</main>
+        <main className="grow flex flex-col items-center w-full">{children}</main>
       ) : (
         children
       )}
@@ -69,10 +70,11 @@ function AppLayout({ children, wrapMain = true }) {
 export default function App() {
   return (
     <AuthProvider>
-      <DataDirsProvider>
-        <ApplicantProvider>
-          <Suspense fallback={<div className="p-12 text-center text-gray-500">Loading...</div>}>
-            <Routes>
+      <NotificationProvider>
+        <DataDirsProvider>
+          <ApplicantProvider>
+            <Suspense fallback={<div className="app-content-width px-4 py-16 text-center text-gray-500">Loading...</div>}>
+              <Routes>
               {/*  Public pages  */}
               <Route path="/" element={<AppLayout><Home /></AppLayout>} />
               <Route path="/about" element={<AppLayout><About /></AppLayout>} />
@@ -165,10 +167,11 @@ export default function App() {
 
               {/*  404  */}
               <Route path="*" element={<AppLayout><NotFound /></AppLayout>} />
-            </Routes>
-          </Suspense>
-        </ApplicantProvider>
-      </DataDirsProvider>
+              </Routes>
+            </Suspense>
+          </ApplicantProvider>
+        </DataDirsProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

@@ -3,8 +3,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useApplicants } from '../../context/ApplicantContext';
 import { useDataDirs } from '../../context/DataDirsContext';
 import { downloadADABulkApproveCsvTemplate } from '../../api/client';
+import { useNotification } from '../../context/NotificationContext';
+import CyanSpinner from '../../components/CyanSpinner';
 
 export default function ADAApplicantList() {
+  const { notifySuccess, notifyError } = useNotification();
   const navigate = useNavigate();
   const { search, pathname } = useLocation();
   const params = new URLSearchParams(search);
@@ -23,6 +26,7 @@ export default function ADAApplicantList() {
     loadFarmers,
     loadADAPendings,
     loadADAApproved,
+    loadingFarmers,
     pendingMeta,
     approvedMeta,
   } = useApplicants();
@@ -131,8 +135,11 @@ export default function ADAApplicantList() {
       link.download = filename;
       link.click();
       URL.revokeObjectURL(url);
+      notifySuccess('CSV format downloaded successfully');
     } catch (e) {
-      setActionError(e.message || 'CSV template download failed');
+      const message = e.message || 'CSV template download failed';
+      setActionError(message);
+      notifyError(message);
     }
   };
 
@@ -151,13 +158,16 @@ export default function ADAApplicantList() {
     return pages;
   };
 
-  const runAction = async (id, action, fallbackMessage) => {
+  const runAction = async (id, action, fallbackMessage, successMessage) => {
     try {
       setActionError('');
       setActingId(id);
       await action();
+      if (successMessage) notifySuccess(successMessage);
     } catch (e) {
-      setActionError(e.message || fallbackMessage);
+      const message = e.message || fallbackMessage;
+      setActionError(message);
+      notifyError(message);
     } finally {
       setActingId(null);
     }
@@ -174,13 +184,13 @@ export default function ADAApplicantList() {
   return (
     <>
       <main className="grow w-full px-4 py-8">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-base font-bold text-gray-700 tracking-widest uppercase mb-4">
+        <div className="app-content-width">
+          <h2 className="section-title text-base font-bold text-gray-700 uppercase mb-4">
             {searchHeading}
           </h2>
 
           <div className="mb-6">
-            <div className="flex flex-wrap gap-3 items-end">
+            <div className="panel-card-soft flex flex-wrap gap-3 items-end p-4">
               <SearchInput label="Acknowledgement ID" value={ackInput} onChange={setAckInput} />
               <SearchInput label="Applicant Name" value={nameInput} onChange={setNameInput} />
               <SearchInput label="Aadhar No" value={aadhaarInput} onChange={setAadhaarInput} narrow />
@@ -189,14 +199,14 @@ export default function ADAApplicantList() {
                 <button
                   type="button"
                   onClick={handleSearch}
-                  className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-1.5 rounded transition-colors"
+                  className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
                 >
                   Search
                 </button>
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-1.5 rounded transition-colors"
+                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
                 >
                   Reset
                 </button>
@@ -205,7 +215,7 @@ export default function ADAApplicantList() {
           </div>
 
           {isPending && (
-            <div className="mb-6 border-t border-gray-300 pt-5">
+            <div className="panel-card-soft mb-6 border-t border-gray-300 pt-5 px-4 pb-4">
               <h3 className="text-[15px] font-medium text-gray-700 mb-4">
                 Bulk Approve
               </h3>
@@ -214,7 +224,7 @@ export default function ADAApplicantList() {
                 <button
                   type="button"
                   onClick={handleTemplateDownload}
-                  className="bg-[#3e7fbe] hover:bg-[#336ea6] text-white text-sm font-medium px-5 py-2 rounded transition-colors"
+                  className="bg-[#3e7fbe] hover:bg-[#336ea6] text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
                 >
                   Download CSV Format
                 </button>
@@ -227,7 +237,7 @@ export default function ADAApplicantList() {
 
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="flex-1 min-w-[320px]">
-                    <label className="flex items-center gap-3 border border-gray-300 rounded px-4 py-2.5 bg-white shadow-sm">
+                    <label className="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 bg-white shadow-sm">
                       <span className="inline-flex items-center bg-white border border-gray-400 text-black text-sm px-3 py-1 leading-none rounded-sm">
                         Choose File
                       </span>
@@ -245,14 +255,14 @@ export default function ADAApplicantList() {
 
                   <button
                     type="button"
-                    className="bg-[#3e7fbe] hover:bg-[#336ea6] text-white text-sm font-semibold px-8 py-3 rounded transition-colors"
+                    className="bg-[#3e7fbe] hover:bg-[#336ea6] text-white text-sm font-semibold px-8 py-3 rounded-xl transition-colors"
                   >
                     UPLOAD CSV
                   </button>
 
                   <button
                     type="button"
-                    className="bg-[#57bf58] hover:bg-[#43a944] text-white text-sm font-semibold px-8 py-3 rounded transition-colors"
+                    className="bg-[#57bf58] hover:bg-[#43a944] text-white text-sm font-semibold px-8 py-3 rounded-xl transition-colors"
                   >
                     Uploaded CSV List
                   </button>
@@ -299,10 +309,10 @@ export default function ADAApplicantList() {
             </button>
           </div>
 
-          <div className="overflow-x-auto border border-gray-200 rounded">
+          <div className="table-shell overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="bg-gray-50 text-gray-700 text-xs font-semibold border-b border-gray-200">
+                <tr className="text-gray-700 text-xs font-semibold border-b border-gray-200">
                   <th className="px-3 py-2.5 text-center border-r border-gray-200 w-10">#</th>
                   <th className="px-3 py-2.5 text-center border-r border-gray-200">Ack ID</th>
                   {isApproved && <th className="px-3 py-2.5 text-center border-r border-gray-200">Khetmajur ID</th>}
@@ -322,7 +332,13 @@ export default function ADAApplicantList() {
               </thead>
 
               <tbody>
-                {paginatedList.length === 0 ? (
+                {loadingFarmers ? (
+                  <tr>
+                    <td colSpan={emptyColSpan} className="py-4">
+                      <CyanSpinner label="Loading records..." />
+                    </td>
+                  </tr>
+                ) : paginatedList.length === 0 ? (
                   <tr>
                     <td colSpan={emptyColSpan} className="text-center py-10 text-gray-400 text-sm">
                       No applications found.
@@ -385,7 +401,7 @@ export default function ADAApplicantList() {
                               <ActionBtn
                                 color="green"
                                 title="Approve"
-                                onClick={() => runAction(row.id, () => approveApplicant(row.id), 'Approve failed')}
+                                onClick={() => runAction(row.id, () => approveApplicant(row.id), 'Approve failed', 'Application approved successfully')}
                                 disabled={isBusy}
                               >
                                 <CheckIcon />
@@ -396,7 +412,7 @@ export default function ADAApplicantList() {
                               <ActionBtn
                                 color="blue"
                                 title="Revert"
-                                onClick={() => runAction(row.id, () => revertToADA(row.id), 'Revert failed')}
+                                onClick={() => runAction(row.id, () => revertToADA(row.id), 'Revert failed', 'Application reverted successfully')}
                                 disabled={isBusy}
                               >
                                 <RevertIcon />
@@ -407,7 +423,7 @@ export default function ADAApplicantList() {
                               <ActionBtn
                                 color="orange"
                                 title="Reject"
-                                onClick={() => runAction(row.id, () => rejectApplicant(row.id), 'Reject failed')}
+                                onClick={() => runAction(row.id, () => rejectApplicant(row.id), 'Reject failed', 'Application rejected successfully')}
                                 disabled={isBusy}
                               >
                                 <XIcon />
@@ -529,7 +545,7 @@ export default function ADAApplicantList() {
                 <button
                   type="button"
                   onClick={async () => {
-                    await runAction(confirmDelete.id, () => deleteApplicant(confirmDelete.id), 'Delete failed');
+                    await runAction(confirmDelete.id, () => deleteApplicant(confirmDelete.id), 'Delete failed', 'Application deleted successfully');
                     setConfirmDelete(null);
                   }}
                   className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-5 py-1.5 rounded"
@@ -552,7 +568,7 @@ function SearchInput({ label, value, onChange, narrow = false }) {
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`border border-gray-300 rounded px-3 py-1.5 text-sm ${narrow ? 'w-40' : 'w-52'} focus:outline-none focus:border-[#3eb0c9]`}
+        className={`field-input !rounded-xl !px-3 !py-2 text-sm ${narrow ? 'w-40' : 'w-52'}`}
       />
     </div>
   );
@@ -573,7 +589,7 @@ function ActionBtn({ color = 'cyan', title, onClick, children, disabled = false 
       title={title}
       onClick={onClick}
       disabled={disabled}
-      className={`${colorMap[color]} text-white p-1.5 rounded transition-colors disabled:opacity-60 disabled:cursor-not-allowed`}
+      className={`${colorMap[color]} text-white p-1.5 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed`}
     >
       {children}
     </button>
